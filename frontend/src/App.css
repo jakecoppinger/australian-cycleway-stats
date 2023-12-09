@@ -1,0 +1,37 @@
+
+
+tr:nth-child(odd) {
+  background-color: #f2f2f2;
+}
+
+body {
+  margin-left: 30px;
+  margin-right: 30px;
+}
+table {
+  border-collapse: collapse;
+}
+
+th {
+  text-align: left;
+  padding-right: 20px;
+}
+
+td {
+  padding-left: 4px;
+  border-left: 1px solid rgb(192, 192, 192);
+}
+tr {
+  border-bottom: 1px solid rgb(192, 192, 192);
+}
+
+td:first-child,
+th:first-child {
+  border-left: none;
+}
+tr:last-child {
+  border-bottom: none;
+}
+table {
+  margin-bottom: 20px;
+}

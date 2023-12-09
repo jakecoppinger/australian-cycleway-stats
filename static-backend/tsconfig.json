@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "module": "commonjs",
+  "compilerOptions": {
+    "incremental": true,
+    "outDir": "./dist",
+    "lib": ["es2017", "dom"],
+    "target": "es6",
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "strict": true,
+    "alwaysStrict": false,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "noUnusedParameters": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true
+  },
+  "include": ["./src/**/*"]
+}
+  
