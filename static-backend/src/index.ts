@@ -5,10 +5,13 @@ import {
   cachedOverpassTurboRequest
 } from "./api/overpass.js";
 
+import { config } from './config.js';
+const { regenerateAustralianData, regenerateInternationalData } = config;
+
 import {
   generateDedicatedCyclewaysQuery,
   generateAllCouncilsQuery,
-  generateOnRoadCycleLanes, generateProposedCyclewaysQuery, generateRelationInfoQuery, generateRelationPointsQuery, generateRoadsQuery, generateSafeStreetsQuery, generateSharedPathsQuery, generateUnderConstructionCyclewaysQuery, generateOnewayRoadsQuery, generateBidiectionalRoadsQuery,
+  generateOnRoadCycleLanes, generateProposedCyclewaysQuery, generateRelationInfoQuery, generateRelationPointsQuery, generateRoadsQuery, generateSafeStreetsQuery, generateSharedPathsQuery, generateUnderConstructionCyclewaysQuery, generateOnewayRoadsQuery, generateBidiectionalRoadsQuery, generateRelationsInfoQuery,
 } from "./utils/overpass-queries.js";
 
 import { GeneratedCouncilData, OSMNode, OSMRelation, OSMWay } from "./types.js";
@@ -23,7 +26,7 @@ const jsonRelativeOutputPath = '../frontend/src/data/'
  */
 async function saveObjectToJsonFile(object: any, fileName: string) {
   const writeFile = fs.promises.writeFile;
-  const jsonString = JSON.stringify(object, null, 2);
+  const jsonString = JSON.stringify(object);
   await writeFile(fileName, jsonString);
 }
 
@@ -55,9 +58,14 @@ async function generateCouncilArea(relationId: number): Promise<number> {
 
 
 async function generateRoadsLength(relationId: number): Promise<number> {
-  const onewayRoads = await cachedOverpassTurboRequest(generateOnewayRoadsQuery(relationId)) as OSMWay[];
-  const bidirectionalRoads = await cachedOverpassTurboRequest(generateBidiectionalRoadsQuery(relationId)) as OSMWay[];
-  return (getLengthOfAllWays(onewayRoads) / 2) + getLengthOfAllWays(bidirectionalRoads);
+
+  // const onewayRoads = await cachedOverpassTurboRequest(generateOnewayRoadsQuery(relationId)) as OSMWay[];
+  // const bidirectionalRoads = await cachedOverpassTurboRequest(generateBidiectionalRoadsQuery(relationId)) as OSMWay[];
+  // return (getLengthOfAllWays(onewayRoads) / 2) + getLengthOfAllWays(bidirectionalRoads);
+
+
+  const roads = await cachedOverpassTurboRequest(generateRoadsQuery(relationId)) as OSMWay[];
+  return getLengthOfAllWays(roads);
 }
 
 const outlierRelationIds = [
@@ -65,18 +73,15 @@ const outlierRelationIds = [
   11716544 // Darwin Waterfront Precinct Municipality
 ]
 
-async function main() {
-  console.log("Starting generation...");
-  // NSW: 2316593
-  const nswRelationId = 2316593;
-  const australiaRelationId = 80500;
-  const allCouncilsQuery = generateAllCouncilsQuery(australiaRelationId);
-  const allCouncilRaw = await cachedOverpassTurboRequest(allCouncilsQuery) as OSMRelation[];
-  const allCouncils = allCouncilRaw
+async function relationsToSummaries(relations: OSMRelation[]): Promise<GeneratedCouncilData[]> {
+
+  const allCouncils = relations
     .map(
-      (relation) => ({ relationId: relation.id, 
-        name: relation.tags.name, wikipedia: relation.tags.wikipedia, 
-        wikidata: relation.tags.wikidata }))
+      (relation) => ({
+        relationId: relation.id,
+        name: relation.tags.name, wikipedia: relation.tags.wikipedia,
+        wikidata: relation.tags.wikidata
+      }))
     // Filter out outlier relation IDs
     .filter((relation) => !outlierRelationIds.includes(relation.relationId))
 
@@ -128,9 +133,12 @@ async function main() {
       await cachedOverpassTurboRequest(safeStreetsQuery) as OSMWay[]
     )
 
+    const safeRoadsToRoadsRatio = roadsLength > 0
+      ? safeStreetsLength / roadsLength : null;
 
     const cyclewaysToRoadsRatio = roadsLength > 0
       ? dedicatedCyclewaysLength / roadsLength : null;
+
     const safePathsToRoadsRatio = roadsLength > 0
       ? (dedicatedCyclewaysLength + sharedPathsLength + safeStreetsLength) / roadsLength
       : null;
@@ -143,10 +151,11 @@ async function main() {
       councilName, relationId, dedicatedCyclewaysLength, roadsLength,
       onRoadCycleLanesLength, sharedPathsLength,
       dedicatedCyclewaysQuery, roadsQuery, onRoadCycleLanesQuery, sharedPathsQuery,
-      // , relationInfoQuery,
       cyclewaysToRoadsRatio, safePathsToRoadsRatio, councilArea,
-      underConstructionCyclewaysQuery, underConstructionCyclewaysLength, proposedCyclewaysLength, proposedCyclewaysQuery,
-      safeStreetsQuery, safeStreetsLength, wikipedia, wikidata, wikidataPopulation
+      underConstructionCyclewaysQuery, underConstructionCyclewaysLength, 
+      proposedCyclewaysLength, proposedCyclewaysQuery,
+      safeStreetsQuery, safeStreetsLength, wikipedia, wikidata, wikidataPopulation,
+      safeRoadsToRoadsRatio
     };
 
     dataByCouncil.push(generatedCouncilData);
@@ -154,30 +163,73 @@ async function main() {
 
 
   const sortedDataByCouncil = dataByCouncil.sort((a, b) => {
-    if(a.cyclewaysToRoadsRatio === null) {
+    if (a.safePathsToRoadsRatio === null) {
       return 0;
     }
-    if(b.cyclewaysToRoadsRatio === null) {
+    if (b.safePathsToRoadsRatio === null) {
       return 0;
     }
-    return b.cyclewaysToRoadsRatio - a.cyclewaysToRoadsRatio;
+    return b.safePathsToRoadsRatio - a.safePathsToRoadsRatio;
   });
 
-  await saveObjectToJsonFile(
-    sortedDataByCouncil,
-    `${jsonRelativeOutputPath}data-by-council.json`,
-  );
-  console.log("Saved data-by-council.json");
+  return sortedDataByCouncil;
+}
+
+async function main() {
+  console.log("Starting generation...");
+  if (regenerateAustralianData) {
+    // NSW: 2316593
+
+    const nswRelationId = 2316593;
+    const australiaRelationId = 80500;
+    const allCouncilsQuery = generateAllCouncilsQuery(australiaRelationId);
+    const allCouncilRaw = await cachedOverpassTurboRequest(allCouncilsQuery) as OSMRelation[];
+
+    const sortedDataByCouncil = await relationsToSummaries(allCouncilRaw);
+
+    await saveObjectToJsonFile(
+      sortedDataByCouncil,
+      `${jsonRelativeOutputPath}data-by-council.json`,
+    );
+    console.log("Saved data-by-council.json");
+  } else {
+    console.log('Skipping Australian data generation');
+  }
+
+
+  if (regenerateInternationalData) {
+    const internationalExampleRelationIds = [
+      47811, // Amsterdam (level 8)
+      11960504, // Amsterdam city (suburb)
+      2192363, // Copenhagen (admin 7)
+      2186660, // Frederiksberg,
+      7444, // Paris (level 8)
+      20727, // Paris 1st Arrondissement
+      5750005, // All Sydney
+      4246124, // All Melbourne
+      2354197, // ACT
+    ]
+    const internationalExampleRelationsQuery = generateRelationsInfoQuery(internationalExampleRelationIds);
+    const internationalRelations = await cachedOverpassTurboRequest(internationalExampleRelationsQuery) as OSMRelation[];
+    const internationalAreasSummaries = await relationsToSummaries(internationalRelations);
+    await saveObjectToJsonFile(
+      internationalAreasSummaries,
+      `${jsonRelativeOutputPath}international-areas.json`,
+    );
+  } else {
+    console.log('Skipping international data generation');
+  }
+  console.log('done!');
 }
 main();
 
 // population sort
-  // const sortedDataByCouncil = dataByCouncil.sort((a, b) => {
-  //   if(a.wikidataPopulation === null) {
-  //     return 0;
-  //   }
-  //   if(b.wikidataPopulation === null) {
-  //     return 0;
-  //   }
-  //   return b.wikidataPopulation - a.wikidataPopulation;
-  // });
+// const sortedDataByCouncil = dataByCouncil.sort((a, b) => {
+//   if(a.wikidataPopulation === null) {
+//     return 0;
+//   }
+//   if(b.wikidataPopulation === null) {
+//     return 0;
+//   }
+//   return b.wikidataPopulation - a.wikidataPopulation;
+// });

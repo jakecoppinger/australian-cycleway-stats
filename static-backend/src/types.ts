@@ -63,10 +63,11 @@ export interface GeneratedCouncilData {
   "roadsQuery": string;
   "onRoadCycleLanesQuery": string;
   "sharedPathsQuery": string;
-  // "relationInfoQuery": string;
   cyclewaysToRoadsRatio: number | null,
   /** Includes dedicated cycleways, shared paths, and safe streets */
   safePathsToRoadsRatio: number | null,
+
+  safeRoadsToRoadsRatio: number | null,
 
   /** In sq metres. Not yet working */
   councilArea: number

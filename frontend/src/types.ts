@@ -1,3 +1,4 @@
+
 export interface GeneratedCouncilData {
   "councilName": string;
   "relationId": number;
@@ -13,6 +14,8 @@ export interface GeneratedCouncilData {
   cyclewaysToRoadsRatio: number | null,
   /** Includes dedicated cycleways, shared paths, and safe streets */
   safePathsToRoadsRatio: number | null,
+
+  safeRoadsToRoadsRatio: number | null,
 
   /** In sq metres. Not yet working */
   councilArea: number

@@ -1,13 +1,4 @@
-export const generateSafeStreetsQuery = (relationId: number) => `
-  [out:json];
-rel(${relationId});map_to_area->.region;
-(
-  way(area.region)["maxspeed"~"^(10|20|30)$"]["highway"]["access"!="private"];
-  way(area.region)["highway"="living_street"][!"maxspeed"]["access"!="private"];
-);
-out geom;
-`
-
+const excludeNonSealedSurfaces = `["surface"!="dirt"]["surface"!="gravel"]["surface"!="unpaved"]`;
 /**
  * Excludes shared paths like prince alfred park
  */
@@ -15,7 +6,17 @@ export const generateDedicatedCyclewaysQuery = (relationId: number) => `
   [out:json];
 rel(${relationId});map_to_area->.region;
 (
-  way(area.region)["highway"~"cycleway"]["segregated"!="no"]["foot"!~"designated|yes"]["surface"!="dirt"]["surface"!="gravel"]["access"!="no"];
+  way(area.region)["highway"~"cycleway"]${excludeNonSealedSurfaces}["segregated"!="no"]["foot"!~"designated|yes"]["access"!="no"];
+
+  way(area.region)["cycleway"="track"]${excludeNonSealedSurfaces};
+  way(area.region)["cycleway:right"="track"]${excludeNonSealedSurfaces};
+  way(area.region)["cycleway:left"="track"]${excludeNonSealedSurfaces};
+
+
+  // https://wiki.openstreetmap.org/wiki/Key:cycleway:buffer
+  way(area.region)["cycleway"="lane"]["cycleway:buffer"]["cycleway:buffer"!~"^(0|no)$"];
+  way(area.region)["cycleway:right"="lane"]["cycleway:buffer"]["cycleway:right:buffer"!~"^(0|no)$"];
+  way(area.region)["cycleway:left"="lane"]["cycleway:buffer"]["cycleway:left:buffer"!~"^(0|no)$"];
 );
 out geom;
 `;
@@ -24,26 +25,43 @@ export const generateSharedPathsQuery = (relationId: number) => `
 [out:json];
 rel(${relationId});map_to_area->.region;
 (
-  way(area.region)["highway"="footway"]["bicycle"="yes"];
-  way(area.region)["highway"="cycleway"]["segregated"="no"];
-way(area.region)["highway"="cycleway"][!"segregated"]["foot"~"yes|designated"];
+  way(area.region)["highway"="footway"]["bicycle"="yes"]${excludeNonSealedSurfaces};
+  way(area.region)["highway"="cycleway"]["segregated"="no"]${excludeNonSealedSurfaces};
+way(area.region)["highway"="cycleway"][!"segregated"]["foot"~"yes|designated"]${excludeNonSealedSurfaces};
 );
 out geom;
   `;
 
 
-/**
- * includes living streets. doesn't include pedestrian malls or cycleways
- */
+// To exclude underground 
+// ["level"!~"-"]["layer"!~"-"]';
+
+/** Selects common road types, excluding link roads */
+const highwaySelector = `["highway"~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street|service)$"]`
+
+const inaccessibleWays = `["access"!~"^(private|permissive)$"]`;
+/** Select roads that are publicly accessibly and not driveways */
+const roadsQuerySelector = `${highwaySelector}${inaccessibleWays}["service"!="driveway"]`;
+
+
+export const generateSafeStreetsQuery = (relationId: number) => `
+  [out:json];
+rel(${relationId});map_to_area->.region;
+(
+  way(area.region)${roadsQuerySelector}["maxspeed"~"^(5|10|15|20|25|30)$"];
+  way(area.region)["highway"="living_street"][!"maxspeed"]${inaccessibleWays};
+);
+out geom;
+`
+
 export const generateRoadsQuery = (relationId: number) => `
 [out:json];
 rel(${relationId});map_to_area->.region;
 (
-  way(area.region)["highway"~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street|service})$"]["access"!="private"]["service"!="driveway"]["level"!~"-"]["layer"!~"-"];
+  way(area.region)${roadsQuerySelector};
 );
 out geom;
 `;
-
 
 /**
  * includes living streets. doesn't include pedestrian malls or cycleways
@@ -52,7 +70,7 @@ export const generateOnewayRoadsQuery = (relationId: number) => `
 [out:json];
 rel(${relationId});map_to_area->.region;
 (
-  way(area.region)["highway"~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street|service})$"]["access"!="private"]["service"!="driveway"]["level"!~"-"]["layer"!~"-"]["oneway"="yes"];
+  way(area.region)${roadsQuerySelector}["oneway"="yes"];
 );
 out geom;
 `;
@@ -63,7 +81,7 @@ export const generateBidiectionalRoadsQuery = (relationId: number) => `
 [out:json];
 rel(${relationId});map_to_area->.region;
 (
-  way(area.region)["highway"~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street|service})$"]["access"!="private"]["service"!="driveway"]["level"!~"-"]["layer"!~"-"]["oneway"!="yes"];
+  way(area.region)${roadsQuerySelector}["oneway"!="yes"];
 );
 out geom;
 `;
@@ -113,6 +131,10 @@ export const generateRelationInfoQuery = (relationId: number) => `
 relation(${relationId});
 out tags;
 `;
+
+/** Generate an overpass turbo query that returns info on multiple relations. Takes in an array of OSM relation IDs. */
+export const generateRelationsInfoQuery = (relationIds: number[]) =>
+  `[out:json];${relationIds.map((id) => `relation(${id});out tags;`).join('')}`;
 
 export const generateRelationPointsQuery = (relationId: number) => `
 [out:json];
