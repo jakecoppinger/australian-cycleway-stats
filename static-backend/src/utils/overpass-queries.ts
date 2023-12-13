@@ -1,4 +1,4 @@
-const excludeNonSealedSurfaces = `["surface"!="dirt"]["surface"!="gravel"]["surface"!="unpaved"]`;
+const excludeNonSealedSurfaces = `["surface"!~"^(dirt|gravel|unpaved|ground|compacted|fine_gravel|shells|rock|pebblestone|earth|grass|sand)$"]`;
 /**
  * Excludes shared paths like prince alfred park
  */
@@ -105,6 +105,7 @@ export const generateProposedCyclewaysQuery = (relationId: number) => `
 rel(${relationId});map_to_area->.region;
 (
   way(area.region)["highway"="proposed"]["proposed"="cycleway"];
+  way(area.region)["proposed:highway"="cycleway"];
 );
 out geom;
 `;
@@ -113,6 +114,7 @@ export const generateUnderConstructionCyclewaysQuery = (relationId: number) => `
 rel(${relationId});map_to_area->.region;
 (
   way(area.region)["highway"="construction"]["construction"="cycleway"];
+  way(area.region)["construction:highway"="cycleway"];
 );
 out geom;
 `;
