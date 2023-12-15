@@ -9,21 +9,10 @@ export const IndexPageComponent = () => {
   return (
     <div>
       <h1>Australian Cycleway Stats</h1>
+      <p>This is a dashboard showing how many cycleways and safe streets there are in every council in Australia, including under construction and proposed cycleways along with international comparisons.</p>
+      <p>It's a work in progress - take these stats with a grain of salt!</p>
       <p>
-        This is very much a work in progress - take these stats with a grain of
-        salt!
-      </p>
-      <p>
-        Click on a statistic link to see a map with the relevant objects (it
-        will open{" "}
-        <a
-          target="_blank"
-          rel="noopener noreferrer"
-          href="https://wiki.openstreetmap.org/wiki/Overpass_turbo"
-        >
-          Overpass Turbo
-        </a>{" "}
-        where you can adjust the query). See{" "}
+        Click on a statistic link to open a map with the relevant paths. See{" "}
         <a
           target="_blank"
           rel="noopener noreferrer"
@@ -42,27 +31,19 @@ export const IndexPageComponent = () => {
         >
           OpenStreetMap
         </a>
-        . See <a href="#footer">below the table</a> for notes on the accuracy on
-        OpenStreetMap data.
+        . Scroll <a href="#footer">below the data</a> for notes on the accuracy
+        on OpenStreetMap data and possible future improvements to this site.
       </p>
       <p>
-        Possible future improvements: (PRs welcome!)
-        <ul>
-          <li>
-            Add aliases for unfamiliar names (Centrum is Amsterdam-Centrum)
-          </li>
-          <li>Include council/city area in the statistics</li>
-          <li>
-            Show breakdown of under construction/proposed cycleways by name and
-            completion date
-          </li>
-          <li>Include length of contraflow streets</li>
-          <li>Allow filtering based on various columns</li>
-          <li>Show map of cycleways/roads when hovering on a statistic</li>
-        </ul>
+        Note: The{" "}
+        <i>
+          Shared paths + legal footpaths + dedicated cycleways + safe roads /
+          roads (%){" "}
+        </i>{" "}
+        column can go above 100% as it includes non-road paths!
       </p>
       <p>
-        A side project by{" "}
+        This is a side project by{" "}
         <a
           target="_blank"
           rel="noopener noreferrer"
@@ -78,7 +59,15 @@ export const IndexPageComponent = () => {
         >
           Github
         </a>
-        .
+        . You can follow me on{" "}
+        <a
+          target="_blank"
+          rel="noopener noreferrer"
+          href="https://mastodon.jakecoppinger.com/@jake"
+        >
+          Mastodon (@jake@jakecoppinger.mastodon.com)
+        </a>{" "}
+        for future updates on this.
       </p>
 
       <h2>City averages or international examples</h2>
@@ -114,6 +103,22 @@ export const IndexPageComponent = () => {
                 mapping content to the highest standard for all users of OSM"
               </blockquote>
             </li>
+          </ul>
+        </p>
+        <p>
+          Possible future improvements: (PRs welcome!)
+          <ul>
+            <li>
+              Add aliases for unfamiliar names (Centrum is Amsterdam-Centrum)
+            </li>
+            <li>Include council/city area in the statistics</li>
+            <li>
+              Show breakdown of under construction/proposed cycleways by name
+              and completion date
+            </li>
+            <li>Include length of contraflow streets</li>
+            <li>Allow filtering based on various columns</li>
+            <li>Show map of cycleways/roads when hovering on a statistic</li>
           </ul>
         </p>
 
