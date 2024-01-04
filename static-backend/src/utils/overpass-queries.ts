@@ -11,12 +11,14 @@ rel(${relationId});map_to_area->.region;
   way(area.region)["cycleway"="track"]${excludeNonSealedSurfaces};
   way(area.region)["cycleway:right"="track"]${excludeNonSealedSurfaces};
   way(area.region)["cycleway:left"="track"]${excludeNonSealedSurfaces};
+  way(area.region)["cycleway:both"="track"]${excludeNonSealedSurfaces};
 
 
   // https://wiki.openstreetmap.org/wiki/Key:cycleway:buffer
   way(area.region)["cycleway"="lane"]["cycleway:buffer"]["cycleway:buffer"!~"^(0|no)$"];
   way(area.region)["cycleway:right"="lane"]["cycleway:buffer"]["cycleway:right:buffer"!~"^(0|no)$"];
   way(area.region)["cycleway:left"="lane"]["cycleway:buffer"]["cycleway:left:buffer"!~"^(0|no)$"];
+  way(area.region)["cycleway:both"="lane"]["cycleway:buffer"]["cycleway:both:buffer"!~"^(0|no)$"];
 );
 out geom;
 `;
@@ -96,6 +98,7 @@ rel(${relationId});map_to_area->.region;
   way(area.region)["cycleway"="lane"];
   way(area.region)["cycleway:left"="lane"];
   way(area.region)["cycleway:right"="lane"];
+  way(area.region)["cycleway:both"="lane"];
 );
 out geom;
 `;
