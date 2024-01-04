@@ -18,7 +18,8 @@ rel(${relationId});map_to_area->.region;
   way(area.region)["cycleway"="lane"]["cycleway:buffer"]["cycleway:buffer"!~"^(0|no)$"];
   way(area.region)["cycleway:right"="lane"]["cycleway:buffer"]["cycleway:right:buffer"!~"^(0|no)$"];
   way(area.region)["cycleway:left"="lane"]["cycleway:buffer"]["cycleway:left:buffer"!~"^(0|no)$"];
-  way(area.region)["cycleway:both"="lane"]["cycleway:buffer"]["cycleway:both:buffer"!~"^(0|no)$"];
+  // Below captures Melbourne tagging with left/right being the side when facing direction of travel for bike lane 
+  way(area.region)[~"cycleway:(left|right|both)"~"^lane$"][~"cycleway:(left|right|both):buffer:(right|both)"~"\d?\.?[1-9]+"];
 );
 out geom;
 `;
