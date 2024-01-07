@@ -1,7 +1,13 @@
 const excludeNonSealedSurfaces = `["surface"!~"^(dirt|gravel|unpaved|ground|compacted|fine_gravel|shells|rock|pebblestone|earth|grass|sand)$"]`;
-/**
- * Excludes shared paths like prince alfred park
- */
+
+/** Selects common road types, excluding link roads */
+const highwaySelector = `["highway"~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street|service)$"]`
+
+const inaccessibleWays = `["access"!~"^(private|permissive)$"]`;
+
+/** Select roads that are publicly accessibly and not driveways */
+const roadsQuerySelector = `${highwaySelector}${inaccessibleWays}["service"!="driveway"]`;
+
 export const generateDedicatedCyclewaysQuery = (relationId: number) => `
   [out:json];
 rel(${relationId});map_to_area->.region;
@@ -13,13 +19,17 @@ rel(${relationId});map_to_area->.region;
   way(area.region)["cycleway:left"="track"]${excludeNonSealedSurfaces};
   way(area.region)["cycleway:both"="track"]${excludeNonSealedSurfaces};
 
+  // No longer includes painted lanes with painted buffer space (but no physical separator)
+  // Eg: 110kph Princes Motorway and only paint: https://www.openstreetmap.org/way/5067683
 
-  // https://wiki.openstreetmap.org/wiki/Key:cycleway:buffer
-  way(area.region)["cycleway"="lane"]["cycleway:buffer"]["cycleway:buffer"!~"^(0|no)$"];
-  way(area.region)["cycleway:right"="lane"]["cycleway:buffer"]["cycleway:right:buffer"!~"^(0|no)$"];
-  way(area.region)["cycleway:left"="lane"]["cycleway:buffer"]["cycleway:left:buffer"!~"^(0|no)$"];
-  // Below captures Melbourne tagging with left/right being the side when facing direction of travel for bike lane 
-  way(area.region)[~"cycleway:(left|right|both)"~"^lane$"][~"cycleway:(left|right|both):buffer:(right|both)"~"\d?\.?[1-9]+"];
+  // Include painted lane ONLY if there is some sort of physical separator
+  // These might include car parking/bollards/flex posts/bumps/planters etc
+  // See https://wiki.openstreetmap.org/wiki/Key:cycleway:separation
+
+  way(area.region)["cycleway"="lane"]["cycleway:separation"]["cycleway:separation"!~"^(no|solid_line|dashed_line|)$"];
+  way(area.region)["cycleway:left"="lane"]["cycleway:left:separation"]["cycleway:right:separation"!~"^(no|solid_line|dashed_line|)$"];
+  way(area.region)["cycleway:right"="lane"]["cycleway:right:separation"]["cycleway:right:separation"!~"^(no|solid_line|dashed_line|)$"];
+  way(area.region)["cycleway:both"="lane"]["cycleway:both:separation"]["cycleway:both:separation"!~"^(no|solid_line|dashed_line|)$"];
 );
 out geom;
 `;
@@ -34,17 +44,6 @@ way(area.region)["highway"="cycleway"][!"segregated"]["foot"~"yes|designated"]${
 );
 out geom;
   `;
-
-
-// To exclude underground 
-// ["level"!~"-"]["layer"!~"-"]';
-
-/** Selects common road types, excluding link roads */
-const highwaySelector = `["highway"~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street|service)$"]`
-
-const inaccessibleWays = `["access"!~"^(private|permissive)$"]`;
-/** Select roads that are publicly accessibly and not driveways */
-const roadsQuerySelector = `${highwaySelector}${inaccessibleWays}["service"!="driveway"]`;
 
 
 export const generateSafeStreetsQuery = (relationId: number) => `
@@ -66,9 +65,6 @@ rel(${relationId});map_to_area->.region;
 out geom;
 `;
 
-/**
- * includes living streets. doesn't include pedestrian malls or cycleways
- */
 export const generateOnewayRoadsQuery = (relationId: number) => `
 [out:json];
 rel(${relationId});map_to_area->.region;
@@ -77,9 +73,7 @@ rel(${relationId});map_to_area->.region;
 );
 out geom;
 `;
-/**
- * includes living streets. doesn't include pedestrian malls or cycleways
- */
+
 export const generateBidiectionalRoadsQuery = (relationId: number) => `
 [out:json];
 rel(${relationId});map_to_area->.region;
@@ -89,8 +83,6 @@ rel(${relationId});map_to_area->.region;
 out geom;
 `;
 
-
-// way(area.region)["highway"~"motorway|trunk|primary|secondary|tertiary|unclassified|residential|motorway_link|trunk_link|primary_link|secondary_link|tertiary_link|living_street|service"]["access"!="private"]["service"!="driveway"]["level"!~"-1|-2"];
 
 export const generateOnRoadCycleLanes = (relationId: number) => `
 [out:json];
@@ -149,8 +141,3 @@ way(r);                 // Retrieves all ways in the relation
 (._;>;);                // Recursively retrieves all nodes in these ways
 out body;               // Outputs the result
 `;
-// [out:json];
-//         relation(${relationId});
-//         way(r);
-//         node(w);
-//         out;
