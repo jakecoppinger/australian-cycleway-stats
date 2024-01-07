@@ -138,6 +138,9 @@ async function relationsToSummaries(relations: OSMRelation[]): Promise<Generated
 
     const cyclewaysToRoadsRatio = roadsLength > 0
       ? dedicatedCyclewaysLength / roadsLength : null;
+    
+    const sharedPathsToRoadsRatio = roadsLength > 0
+      ? sharedPathsLength / roadsLength : null;
 
     const safePathsToRoadsRatio = roadsLength > 0
       ? (dedicatedCyclewaysLength + sharedPathsLength + safeStreetsLength) / roadsLength
@@ -155,7 +158,7 @@ async function relationsToSummaries(relations: OSMRelation[]): Promise<Generated
       underConstructionCyclewaysQuery, underConstructionCyclewaysLength, 
       proposedCyclewaysLength, proposedCyclewaysQuery,
       safeStreetsQuery, safeStreetsLength, wikipedia, wikidata, wikidataPopulation,
-      safeRoadsToRoadsRatio
+      safeRoadsToRoadsRatio, sharedPathsToRoadsRatio
     };
 
     dataByCouncil.push(generatedCouncilData);

@@ -68,6 +68,7 @@ export interface GeneratedCouncilData {
   safePathsToRoadsRatio: number | null,
 
   safeRoadsToRoadsRatio: number | null,
+  sharedPathsToRoadsRatio: number | null,
 
   /** In sq metres. Not yet working */
   councilArea: number

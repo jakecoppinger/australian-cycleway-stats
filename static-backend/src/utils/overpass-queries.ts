@@ -1,6 +1,8 @@
 const excludeNonSealedSurfaces = `["surface"!~"^(dirt|gravel|unpaved|ground|compacted|fine_gravel|shells|rock|pebblestone|earth|grass|sand)$"]`;
 /**
- * Excludes shared paths like prince alfred park
+ * This query selects all dedicated cycleways. It includes cycleways that are marked as a track (as
+ * per https://wiki.openstreetmap.org/wiki/Tag:cycleway%3Dtrack) which has some sort of separtation,
+ * but excludes painted on cycleways.
  */
 export const generateDedicatedCyclewaysQuery = (relationId: number) => `
   [out:json];
@@ -21,26 +23,26 @@ rel(${relationId});map_to_area->.region;
 out geom;
 `;
 
+/** This query selects all shared paths, but doesn't include footpaths where cycling is legal (eg. Canberra) */
 export const generateSharedPathsQuery = (relationId: number) => `
 [out:json];
 rel(${relationId});map_to_area->.region;
 (
-  way(area.region)["highway"="footway"]["bicycle"="yes"]${excludeNonSealedSurfaces};
   way(area.region)["highway"="cycleway"]["segregated"="no"]${excludeNonSealedSurfaces};
-way(area.region)["highway"="cycleway"][!"segregated"]["foot"~"yes|designated"]${excludeNonSealedSurfaces};
+  way(area.region)["highway"="cycleway"][!"segregated"]["foot"~"yes|designated"]${excludeNonSealedSurfaces};
 );
 out geom;
-  `;
+`;
 
 
-// To exclude underground 
-// ["level"!~"-"]["layer"!~"-"]';
 
 /** Selects common road types, excluding link roads */
 const highwaySelector = `["highway"~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street|service)$"]`
 
+/** Excludes roads/paths that the public aren't guaranteed to be able to use */
 const inaccessibleWays = `["access"!~"^(private|permissive)$"]`;
-/** Select roads that are publicly accessibly and not driveways */
+
+/** Selects roads that are publicly accessibly and not driveways */
 const roadsQuerySelector = `${highwaySelector}${inaccessibleWays}["service"!="driveway"]`;
 
 
