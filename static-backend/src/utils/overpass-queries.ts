@@ -38,12 +38,15 @@ export const generateSharedPathsQuery = (relationId: number) => `
 [out:json];
 rel(${relationId});map_to_area->.region;
 (
-  way(area.region)["highway"="footway"]["bicycle"="yes"]${excludeNonSealedSurfaces};
+  // Exclude footpath cycling; not all footpaths in legal juristictions are tagged
+  // way(area.region)["highway"="footway"]["bicycle"="yes"]${excludeNonSealedSurfaces};
+
+  // Include shared paths
   way(area.region)["highway"="cycleway"]["segregated"="no"]${excludeNonSealedSurfaces};
-way(area.region)["highway"="cycleway"][!"segregated"]["foot"~"yes|designated"]${excludeNonSealedSurfaces};
+  way(area.region)["highway"="cycleway"][!"segregated"]["foot"~"yes|designated"]${excludeNonSealedSurfaces};
 );
 out geom;
-  `;
+ `;
 
 
 export const generateSafeStreetsQuery = (relationId: number) => `

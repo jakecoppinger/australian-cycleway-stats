@@ -208,6 +208,8 @@ async function main() {
       5750005, // All Sydney
       4246124, // All Melbourne
       2354197, // ACT
+      44915, // Milan (level 8)
+      8398124, // Manhattan (level 7)
     ]
     const internationalExampleRelationsQuery = generateRelationsInfoQuery(internationalExampleRelationIds);
     const internationalRelations = await cachedOverpassTurboRequest(internationalExampleRelationsQuery) as OSMRelation[];
