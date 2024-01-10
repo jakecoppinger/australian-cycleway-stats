@@ -64,3 +64,15 @@ table td:nth-child(9) {
 table td:nth-child(9) a {
   color:black;
 }
+
+/* Sortable table reset */
+.sortable thead th {
+    background: inherit !important;
+    
+    color: initial !important;
+    font-weight: initial !important;
+    text-align: initial !important;
+    text-transform: initial !important;
+    vertical-align: initial !important;
+    white-space: initial !important;
+}

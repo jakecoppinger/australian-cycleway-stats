@@ -5,6 +5,9 @@ import dataByCouncil from "../data/data-by-council.json";
 import internationalAreas from "../data/international-areas.json";
 import { LinkToOverpassQuery } from "../components/LinkToOverpassQuery";
 import styled from '@emotion/styled'
+import 'sortable-tablesort/sortable.min.css'
+import 'sortable-tablesort/sortable.min.js'
+
 
 const PageTitle = styled.h1`
   font-weight: bold;
@@ -244,7 +247,7 @@ const CouncilTable = ({
   dataByCouncil: GeneratedCouncilData[];
 }) => {
   return (
-    <table>
+    <table className="sortable">
       <thead>
         <tr>
           <th>Council name</th>
