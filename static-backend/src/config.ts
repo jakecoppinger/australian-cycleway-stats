@@ -3,6 +3,6 @@ export const config = {
   // or roll your own (much faster): https://github.com/wiktorn/Overpass-API
   // overpassApi: 'http://localhost:12351/api/interpreter',
   overpassApi: 'https://overpass-api.de/api/interpreter',
-  regenerateAustralianData: false,
+  regenerateAustralianData: true,
   regenerateInternationalData: true,
 }

@@ -47,3 +47,20 @@ tr:last-child {
 table {
   margin-bottom: 20px;
 }
+
+li {
+  margin-top:7px;
+  margin-bottom: 7px;
+}
+
+table td:nth-child(5), table td:nth-child(8) {
+  background-color:rgb(50, 194, 100,0.3);
+}
+table td:nth-child(9) {
+  background-color:rgb(74, 141, 211,0.3);
+  color:black;
+}
+
+table td:nth-child(9) a {
+  color:black;
+}

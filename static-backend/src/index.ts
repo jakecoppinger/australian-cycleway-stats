@@ -58,11 +58,9 @@ async function generateCouncilArea(relationId: number): Promise<number> {
 
 
 async function generateRoadsLength(relationId: number): Promise<number> {
-
   // const onewayRoads = await cachedOverpassTurboRequest(generateOnewayRoadsQuery(relationId)) as OSMWay[];
   // const bidirectionalRoads = await cachedOverpassTurboRequest(generateBidiectionalRoadsQuery(relationId)) as OSMWay[];
   // return (getLengthOfAllWays(onewayRoads) / 2) + getLengthOfAllWays(bidirectionalRoads);
-
 
   const roads = await cachedOverpassTurboRequest(generateRoadsQuery(relationId)) as OSMWay[];
   return getLengthOfAllWays(roads);
@@ -100,6 +98,7 @@ async function relationsToSummaries(relations: OSMRelation[]): Promise<Generated
     const relationInfoQuery = generateRelationInfoQuery(relationId);
     const relationInfo = (await cachedOverpassTurboRequest(relationInfoQuery))[0] as OSMRelation;
     const councilName = relationInfo.tags.name || '(area missing name)';
+    const councilNameEnglish = relationInfo.tags['name:en'];
 
     const dedicatedCyclewaysQuery = generateDedicatedCyclewaysQuery(relationId)
     const dedicatedCyclewaysLength = getLengthOfAllWays(
@@ -155,7 +154,7 @@ async function relationsToSummaries(relations: OSMRelation[]): Promise<Generated
       underConstructionCyclewaysQuery, underConstructionCyclewaysLength, 
       proposedCyclewaysLength, proposedCyclewaysQuery,
       safeStreetsQuery, safeStreetsLength, wikipedia, wikidata, wikidataPopulation,
-      safeRoadsToRoadsRatio
+      safeRoadsToRoadsRatio, councilNameEnglish
     };
 
     dataByCouncil.push(generatedCouncilData);

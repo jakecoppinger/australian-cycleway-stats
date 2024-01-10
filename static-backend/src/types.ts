@@ -31,6 +31,7 @@ export interface OSMRelation {
   id: number,
   tags: {
     name?: string,
+    ["name:en"]?: string,
     type?: string,
     boundary?: string,
     admin_level?: string,
@@ -83,5 +84,6 @@ export interface GeneratedCouncilData {
   wikipedia?: string | undefined
   wikidata?: string | undefined
   wikidataPopulation: number | null
+  councilNameEnglish?: string | undefined,
 }
 

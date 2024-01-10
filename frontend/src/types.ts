@@ -1,5 +1,6 @@
 
 export interface GeneratedCouncilData {
+  councilNameEnglish?: string | undefined,
   "councilName": string;
   "relationId": number;
   "dedicatedCyclewaysLength": number;
