@@ -49,9 +49,9 @@ export const IndexPageComponent = () => {
       <div>
         <HeadingBylineContainer>
           <h3>
-            This dashboard provides an in-depth look at the kilometres of cycleways
+            This dashboard provides an in-depth look at the length of cycle paths
             and safe streets in every Australian council, encompassing current,
-            under-construction, and proposed projects, as well as international benchmarks.
+            under-construction, proposed projects, along with international benchmarks.
           </h3>
         </HeadingBylineContainer>
         <GreyTextContainer>
