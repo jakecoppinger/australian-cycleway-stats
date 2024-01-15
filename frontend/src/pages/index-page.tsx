@@ -207,6 +207,10 @@ export const IndexPageComponent = () => {
                   href="https://overpass-turbo.eu/s/1FMP">overpass-turbo.eu/s/1FMP</a> for these cases.
               </li>
             </ul>
+            <li>Substantial lengths of separated cycleways in rural councils may be false positives
+               due to mountain bike trails incorrectly tagged as cycleways (cycleways with
+               non-sealed surfaces are excluded). Viewing the map of dedicated cycleways can
+               quickly identify these issues.</li>
           </ul>
           <PageHeading>
             Possible future improvements
