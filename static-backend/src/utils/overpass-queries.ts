@@ -1,7 +1,7 @@
 const excludeNonSealedSurfaces = `["surface"!~"^(dirt|gravel|unpaved|ground|compacted|fine_gravel|shells|rock|pebblestone|earth|grass|sand)$"]`;
 
 /** Selects common road types, excluding link roads */
-const highwaySelector = `["highway"~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street|service)$"]`
+const highwaySelector = `["highway"~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street|service|pedestrian)$"]`
 
 const inaccessibleWays = `["access"!~"^(private|permissive)$"]`;
 
@@ -38,12 +38,23 @@ export const generateSharedPathsQuery = (relationId: number) => `
 [out:json];
 rel(${relationId});map_to_area->.region;
 (
-  // Exclude footpath cycling; not all footpaths in legal juristictions are tagged
+  // Exclude footpath cycling for equal comparisons across states, though you could argue
+  // a legal cycling footpath is as valid as a shared path. I've added a note in the copy text that
+  // footpath cycling is excluded for clarity.
+
+  // Not all footpaths in legal juristictions are tagged with bicycle=yes as well so this would be
+  // incomplete.
+
+  // There may be false negatives here, but footpaths that allow cycling and aren't a shared path
+  // are very rare (and are likely tagging errors) in non-footpath cycling states.
   // way(area.region)["highway"="footway"]["bicycle"="yes"]${excludeNonSealedSurfaces};
 
   // Include shared paths
   way(area.region)["highway"="cycleway"]["segregated"="no"]${excludeNonSealedSurfaces};
   way(area.region)["highway"="cycleway"][!"segregated"]["foot"~"yes|designated"]${excludeNonSealedSurfaces};
+
+  // Include pedestrian streets tagged as explicitly allowing cycling (eg. Martin Place)
+  way(area.region)["highway"="pedestrian"]["bicycle"="yes"]${excludeNonSealedSurfaces};
 );
 out geom;
  `;

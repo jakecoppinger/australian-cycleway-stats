@@ -159,6 +159,8 @@ export const IndexPageComponent = () => {
           </i>{" "}
           column can go above 100% as it includes non-road paths!
         </p>
+        <p>See <a href="#notes-on-methodology">Notes on methodology</a> section for more details
+        on what is and isn't included in each metric.</p>
         <CouncilTable dataByCouncil={internationalAreas}></CouncilTable>
         <PageHeading>Australian councils</PageHeading>
         <p>
@@ -166,6 +168,8 @@ export const IndexPageComponent = () => {
           <code>admin_level=6</code>, which generally correspond to council
           boundaries.
         </p>
+        <p>See <a href="#notes-on-methodology">Notes on methodology</a> section for more details
+        on what is and isn't included in each metric.</p>
         <CouncilTable dataByCouncil={dataByCouncil}></CouncilTable>
 
         <p>If you want smartphone navigation directions using this data, see blog post <a
@@ -174,7 +178,7 @@ export const IndexPageComponent = () => {
           href="https://jakecoppinger.com/2020/07/the-best-apps-for-bicycle-directions/">
           The Best Apps for Bicycle Directions (2020)</a>.</p>
         <footer id="footer">
-          <PageHeading>Notes on methodology</PageHeading>
+          <a id="notes-on-methodology"><PageHeading>Notes on methodology</PageHeading></a>
           <ul>
             <li>One-way cycleways are not counted any differently to bidirectional cycleways (for simplicity)</li>
             <li>Dual carriageway roads are currently "double counted"
@@ -192,7 +196,7 @@ export const IndexPageComponent = () => {
               </ul>
             </li>
             <li>Footpaths that allow bicycles are not currently included as "shared paths". Not all
-              footpaths in footpath cycling legal councils are tagged with <code>bicycle=yes</code>
+              footpaths in footpath cycling legal councils are tagged with <code>bicycle=yes</code>{" "}
               and I haven't yet built functionality to categorise councils by state (and therefore legality).</li>
             <ul>
               <li>
@@ -209,10 +213,8 @@ export const IndexPageComponent = () => {
           </PageHeading>
           <p>PRs welcome!</p>
           <ul>
-            <li>
-              Add aliases for unfamiliar names (Centrum is Amsterdam-Centrum)
-            </li>
             <li>Improve categorisation of international examples</li>
+            <li>Add state of each council example</li>
             <li>Include length of contraflow streets</li>
             <li>Allow filtering based on various columns</li>
           </ul>
