@@ -315,12 +315,12 @@ const CouncilTableRow = ({ row }: { row: GeneratedCouncilData }) => {
           <WikipediaLink articleName={wikipedia}>(Wikipedia)</WikipediaLink>
         ) : null}
       </td>
-      <td>{formatPopulation(wikidataPopulation)}</td>
+      <td data-sort={wikidataPopulation}>{formatPopulation(wikidataPopulation)}</td>
 
-      <td>{formatRatio(safePathsToRoadsRatio)}</td>
-      <td>{formatRatio(safeRoadsToRoadsRatio)}</td>
+      <td data-sort={safePathsToRoadsRatio}>{formatRatio(safePathsToRoadsRatio)}</td>
+      <td data-sort={safeRoadsToRoadsRatio}>{formatRatio(safeRoadsToRoadsRatio)}</td>
 
-      <td>{formatRatio(cyclewaysToRoadsRatio)}</td>
+      <td data-sort={cyclewaysToRoadsRatio}>{formatRatio(cyclewaysToRoadsRatio)}</td>
 
       <td>
         <LinkToOverpassQuery queryStr={roadsQuery}>
