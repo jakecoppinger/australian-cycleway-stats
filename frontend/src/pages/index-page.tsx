@@ -49,9 +49,9 @@ export const IndexPageComponent = () => {
       <div>
         <HeadingBylineContainer>
           <h3>
-          This dashboard provides an in-depth look at the kilometres of cycleways
-          and safe streets in every Australian council, encompassing current,
-          under-construction, and proposed projects, as well as international benchmarks.
+            This dashboard provides an in-depth look at the kilometres of cycleways
+            and safe streets in every Australian council, encompassing current,
+            under-construction, and proposed projects, as well as international benchmarks.
           </h3>
         </HeadingBylineContainer>
         <GreyTextContainer>
@@ -67,7 +67,7 @@ export const IndexPageComponent = () => {
             <a
               target="_blank"
               rel="noopener noreferrer"
-              href="https://mastodon.jakecoppinger.com/@jake"
+              href="https://mastodon.social/@jakecoppinger"
             >Mastodon</a>, or <a
               target="_blank"
               rel="noopener noreferrer"
@@ -120,7 +120,8 @@ export const IndexPageComponent = () => {
             </li>
           </ul>
 
-          <p><b>Data license & how to reference:</b> If you use this data, please reference as "© Australian Cycleway Stats, OpenStreetMap contributors" or "Source: Australian Cycleway Stats, OpenStreetMap contributors".</p>
+          <p>
+            <b>Data license & how to reference:</b> If you use this data, please reference as "Source: Australian Cycleway Stats, OpenStreetMap contributors" or "© Australian Cycleway Stats, OpenStreetMap contributors".</p>
           <p>
             <b>Author:</b> This is a side project by{" "}
             <a
@@ -141,9 +142,9 @@ export const IndexPageComponent = () => {
             <a
               target="_blank"
               rel="noopener noreferrer"
-              href="https://mastodon.jakecoppinger.com/@jake"
+              href="https://mastodon.social/@jakecoppinger"
             >
-              Mastodon (@jake@jakecoppinger.mastodon.com)
+              Mastodon
             </a>{" "}
             for future updates.
           </p>
@@ -384,7 +385,6 @@ function RelationLink({
   relationId: number;
   children: React.ReactNode;
 }) {
-  console.log(children);
   const lookup: Record<string, string> = { 'Centrum': 'Amsterdam (Centrum)' }
   const name = lookup[children as string] || children as string
   return (
