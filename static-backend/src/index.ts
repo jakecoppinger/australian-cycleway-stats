@@ -66,9 +66,9 @@ async function generateRoadsLength(relationId: number): Promise<number> {
   return getLengthOfAllWays(roads);
 }
 
-const outlierRelationIds = [
+const outlierRelationIds: number[] = [
   16694855, // Kings park
-  11716544 // Darwin Waterfront Precinct Municipality
+  11716544, // Darwin Waterfront Precinct Municipality
 ]
 
 async function relationsToSummaries(relations: OSMRelation[]): Promise<GeneratedCouncilData[]> {
@@ -82,6 +82,7 @@ async function relationsToSummaries(relations: OSMRelation[]): Promise<Generated
       }))
     // Filter out outlier relation IDs
     .filter((relation) => !outlierRelationIds.includes(relation.relationId))
+    .filter((relation) => !config.debug || relation.name === "Council of the City of Sydney")
 
 
 
@@ -201,6 +202,7 @@ async function main() {
       47811, // Amsterdam (level 8)
       11960504, // Amsterdam city (suburb)
       2192363, // Copenhagen (admin 7)
+      7426387, // Bogotá (admin 7)
       2186660, // Frederiksberg,
       7444, // Paris (level 8)
       20727, // Paris 1st Arrondissement

@@ -1,4 +1,4 @@
-const excludeNonSealedSurfaces = `["surface"!~"^(dirt|gravel|unpaved|ground|compacted|fine_gravel|shells|rock|pebblestone|earth|grass|sand)$"]`;
+const excludeNonSealedSurfaces = `["surface"!~"^(dirt|gravel|unpaved|ground|compacted|fine_gravel|shells|rock|pebblestone|earth|grass|sand)$"]["mtb"!="yes"]`;
 
 /** Selects common road types, excluding link roads */
 const highwaySelector = `["highway"~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street|service|pedestrian)$"]`
@@ -6,7 +6,7 @@ const highwaySelector = `["highway"~"^(motorway|trunk|primary|secondary|tertiary
 const inaccessibleWays = `["access"!~"^(private|permissive)$"]`;
 
 /** Select roads that are publicly accessibly and not driveways */
-const roadsQuerySelector = `${highwaySelector}${inaccessibleWays}["service"!="driveway"]`;
+const roadsQuerySelector = `${highwaySelector}${inaccessibleWays}["service"!~"^(driveway|parking_aisle)$"]`;
 
 export const generateDedicatedCyclewaysQuery = (relationId: number) => `
   [out:json];
@@ -30,6 +30,12 @@ rel(${relationId});map_to_area->.region;
   way(area.region)["cycleway:left"="lane"]["cycleway:left:separation"]["cycleway:right:separation"!~"^(no|solid_line|dashed_line|)$"];
   way(area.region)["cycleway:right"="lane"]["cycleway:right:separation"]["cycleway:right:separation"!~"^(no|solid_line|dashed_line|)$"];
   way(area.region)["cycleway:both"="lane"]["cycleway:both:separation"]["cycleway:both:separation"!~"^(no|solid_line|dashed_line|)$"];
+
+  // Include paved paths designated for bicycles
+  way(area.region)["highway=path"]["bicycle"="designated"]["segregated"!="no"]${excludeNonSealedSurfaces};
+
+  // Include bicycle ramps
+  way(area.region)["ramp:bicycle"="yes"];
 );
 out geom;
 `;
@@ -53,6 +59,8 @@ rel(${relationId});map_to_area->.region;
   way(area.region)["highway"="cycleway"]["segregated"="no"]${excludeNonSealedSurfaces};
   way(area.region)["highway"="cycleway"][!"segregated"]["foot"~"yes|designated"]${excludeNonSealedSurfaces};
 
+  way(area.region)["highway=path"]["bicycle"="designated"]["segregated"="yes"]${excludeNonSealedSurfaces};
+
   // Include pedestrian streets tagged as explicitly allowing cycling (eg. Martin Place)
   way(area.region)["highway"="pedestrian"]["bicycle"="yes"]${excludeNonSealedSurfaces};
 );
@@ -64,8 +72,8 @@ export const generateSafeStreetsQuery = (relationId: number) => `
   [out:json];
 rel(${relationId});map_to_area->.region;
 (
-  way(area.region)${roadsQuerySelector}["maxspeed"~"^(5|10|15|20|25|30)$"];
-  way(area.region)["highway"="living_street"][!"maxspeed"]${inaccessibleWays};
+  way(area.region)${roadsQuerySelector}["maxspeed"~"^(5|10|15|20|25|30)$"]${excludeNonSealedSurfaces};
+  way(area.region)["highway"="living_street"][!"maxspeed"]${inaccessibleWays}${excludeNonSealedSurfaces};
 );
 out geom;
 `
