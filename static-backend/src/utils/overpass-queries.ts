@@ -1,20 +1,20 @@
 const excludeNonSealedSurfaces = `["surface"!~"^(dirt|gravel|unpaved|ground|compacted|fine_gravel|shells|rock|pebblestone|earth|grass|sand)$"]["mtb"!="yes"]`;
 
-/** Selects common road types, excluding link roads */
+/** Selects common road types, excluding link roads. Cyclists not guaranteed to be able to use them (eg. highway=pedestrian) */
 const highwaySelector = `["highway"~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street|service|pedestrian)$"]`
 
-const inaccessibleWays = `["access"!~"^(private|permissive)$"]`;
+const excludeInaccessible = `["access"!~"^(private|permissive|no)$"]`;
 
-/** Select roads that are publicly accessibly and not driveways */
-const roadsQuerySelector = `${highwaySelector}${inaccessibleWays}["service"!~"^(driveway|parking_aisle)$"]`;
+/** Select roads that are publicly accessibly and not driveways. Cyclists not guaranteed to be able to use them (eg. highway=pedestrian)  */
+const roadsQuerySelector = `${highwaySelector}${excludeInaccessible}["service"!~"^(driveway|parking_aisle)$"]`;
 
 export const generateDedicatedCyclewaysQuery = (relationId: number) => `
   [out:json];
 rel(${relationId});map_to_area->.region;
 (
-  way(area.region)["highway"~"cycleway"]${excludeNonSealedSurfaces}["segregated"!="no"]["foot"!~"designated|yes"]["access"!="no"];
+  way(area.region)["highway"~"cycleway"]${excludeNonSealedSurfaces}["segregated"!="no"]["foot"!~"designated|yes"]${excludeInaccessible};
 
-  way(area.region)["cycleway"="track"]${excludeNonSealedSurfaces};
+  way(area.region)["cycleway"="track"]["segregated"!="no"]["foot"!~"designated|yes"]${excludeInaccessible}${excludeNonSealedSurfaces};
   way(area.region)["cycleway:right"="track"]${excludeNonSealedSurfaces};
   way(area.region)["cycleway:left"="track"]${excludeNonSealedSurfaces};
   way(area.region)["cycleway:both"="track"]${excludeNonSealedSurfaces};
@@ -25,7 +25,6 @@ rel(${relationId});map_to_area->.region;
   // Include painted lane ONLY if there is some sort of physical separator
   // These might include car parking/bollards/flex posts/bumps/planters etc
   // See https://wiki.openstreetmap.org/wiki/Key:cycleway:separation
-
   way(area.region)["cycleway"="lane"]["cycleway:separation"]["cycleway:separation"!~"^(no|solid_line|dashed_line|)$"];
   way(area.region)["cycleway:left"="lane"]["cycleway:left:separation"]["cycleway:right:separation"!~"^(no|solid_line|dashed_line|)$"];
   way(area.region)["cycleway:right"="lane"]["cycleway:right:separation"]["cycleway:right:separation"!~"^(no|solid_line|dashed_line|)$"];
@@ -49,31 +48,45 @@ rel(${relationId});map_to_area->.region;
   // footpath cycling is excluded for clarity.
 
   // Not all footpaths in legal juristictions are tagged with bicycle=yes as well so this would be
-  // incomplete.
+  // incomplete without additional filters by legal juristiction.
 
   // There may be false negatives here, but footpaths that allow cycling and aren't a shared path
-  // are very rare (and are likely tagging errors) in non-footpath cycling states.
-  // way(area.region)["highway"="footway"]["bicycle"="yes"]${excludeNonSealedSurfaces};
+  // are somewhat rare (and are possibly tagging errors) in non-footpath cycling states.
+  // See overpass-turbo.eu/s/1FMP for these cases.
 
   // Include shared paths
   way(area.region)["highway"="cycleway"]["segregated"="no"]${excludeNonSealedSurfaces};
   way(area.region)["highway"="cycleway"][!"segregated"]["foot"~"yes|designated"]${excludeNonSealedSurfaces};
 
+  // Include paved paths as long as they aren't shared with pedestrians
   way(area.region)["highway=path"]["bicycle"="designated"]["segregated"="yes"]${excludeNonSealedSurfaces};
 
-  // Include pedestrian streets tagged as explicitly allowing cycling (eg. Martin Place)
+  // Include pedestrian streets tagged as explicitly allowing cycling (eg. Martin Place, Sydney)
   way(area.region)["highway"="pedestrian"]["bicycle"="yes"]${excludeNonSealedSurfaces};
+
+  way(area.region)["cycleway"="track"]["foot"~"designated|yes"]${excludeInaccessible}${excludeNonSealedSurfaces};
+  way(area.region)["cycleway"="track"]["highway"="footway"]${excludeInaccessible}${excludeNonSealedSurfaces};
 );
 out geom;
- `;
+`;
 
 
 export const generateSafeStreetsQuery = (relationId: number) => `
   [out:json];
 rel(${relationId});map_to_area->.region;
 (
-  way(area.region)${roadsQuerySelector}["maxspeed"~"^(5|10|15|20|25|30)$"]${excludeNonSealedSurfaces};
-  way(area.region)["highway"="living_street"][!"maxspeed"]${inaccessibleWays}${excludeNonSealedSurfaces};
+  // Include all roads with a specified speed limit of <= 30kmh (except pedestrian streets that may disallow biycles by default)
+  way(area.region)${roadsQuerySelector}["highway"!="pedestrian"]["maxspeed"~"^(5|10|15|20|25|30)$"]${excludeNonSealedSurfaces};
+
+  // Include living/shared streets even if they don't have a speed limit, but not if they have a >=30 kmh speed limit
+  // (living streets imply bicycle=yes)
+  way(area.region)["highway"="living_street"]["maxspeed"!~"^(40|50|60|70|80)$"]${excludeInaccessible}${excludeNonSealedSurfaces};
+
+  // Include pedestrian streets tagged as explicitly allowing cycling as long as they have an
+  // advistory speed limit <= 30kmh (or no limit marked)
+  // Pedestrian streets don't imply bicycle=yes (and include George Street, Sydney)
+  way(area.region)["highway"="pedestrian"]["bicycle"="yes"]["maxspeed"!~"^(40|50|60|70|80)$"]${excludeNonSealedSurfaces};
+  way(area.region)["highway"="pedestrian"]["bicycle"="yes"]["maxspeed:advisory"~"^(5|10|15|20|25|30)$"]${excludeNonSealedSurfaces};
 );
 out geom;
 `
