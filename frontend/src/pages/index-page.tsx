@@ -1,13 +1,13 @@
-import React, { Fragment, useEffect, useState } from "react";
-import "../App.css";
-import { GeneratedCouncilData } from "../types";
-import dataByCouncil from "../data/data-by-council.json";
-import internationalAreas from "../data/international-areas.json";
-import { LinkToOverpassQuery } from "../components/LinkToOverpassQuery";
+import React, { Fragment } from "react";
 import styled from '@emotion/styled'
 import 'sortable-tablesort/sortable.min.css'
 import 'sortable-tablesort/sortable.min.js'
 
+import "../App.css";
+import dataByCouncil from "../data/australian-data-by-council.json";
+import internationalAreas from "../data/international-areas.json";
+import { LinkToOverpassQuery } from "../components/LinkToOverpassQuery";
+import { StatsFile, RelationStatsObject } from "../shared-types";
 
 const PageTitle = styled.h1`
   font-weight: bold;
@@ -45,7 +45,7 @@ export const IndexPageComponent = () => {
 
   return (
     <Fragment>
-      <PageTitle>Australian<br></br>CYCLEWAY<br></br>STATS.</PageTitle>
+      <PageTitle>Australian<br></br>Cycleway<br></br>Stats.</PageTitle>
       <div>
         <HeadingBylineContainer>
           <h3>
@@ -251,7 +251,7 @@ export const IndexPageComponent = () => {
 const CouncilTable = ({
   dataByCouncil,
 }: {
-  dataByCouncil: GeneratedCouncilData[];
+  dataByCouncil: StatsFile;
 }) => {
   return (
     <table className="sortable">
@@ -275,43 +275,48 @@ const CouncilTable = ({
         </tr>
       </thead>
       <tbody>
-        {dataByCouncil
+        {dataByCouncil.areas
           .filter(row => row.roadsLength > 0)
           .map((row) => (
-            <CouncilTableRow key={row.relationId} row={row} />
+            <CouncilTableRow key={row.relationId} overpassQueryStrings={dataByCouncil.overpassQueryStrings} row={row} />
           ))}
       </tbody>
     </table>
   );
 };
 
-const CouncilTableRow = ({ row }: { row: GeneratedCouncilData }) => {
+function hydrateQueryString(query: string, relationId: number): string {
+  const magicRelationNumber = 999999;
+  // Replace instances of the magic number in the query with the relationId
+  return query.replace(magicRelationNumber.toString(), relationId.toString());
+}
+
+function generateQueryOrUndefined(queryName: string, relationId: number, overpassQueryStrings: Record<string, string>): string | undefined {
+  return overpassQueryStrings[queryName] ? hydrateQueryString(overpassQueryStrings[queryName], relationId) : undefined
+}
+
+const CouncilTableRow = ({ row, overpassQueryStrings }: { row: RelationStatsObject, overpassQueryStrings: Record<string,string> }) => {
   const {
     // relationInfoQuery,
     councilName,
     councilNameEnglish,
     dedicatedCyclewaysLength,
-    dedicatedCyclewaysQuery,
     roadsLength,
-    roadsQuery,
     sharedPathsLength,
-    sharedPathsQuery,
-    onRoadCycleLanesQuery,
     onRoadCycleLanesLength,
-
     cyclewaysToRoadsRatio,
     safePathsToRoadsRatio,
     underConstructionCyclewaysLength,
-    underConstructionCyclewaysQuery,
     proposedCyclewaysLength,
-    proposedCyclewaysQuery,
     safeStreetsLength,
-    safeStreetsQuery,
     wikipedia,
     wikidataPopulation,
     relationId,
     safeRoadsToRoadsRatio,
   } = row;
+
+
+
 
   return (
     <tr>
@@ -329,38 +334,38 @@ const CouncilTableRow = ({ row }: { row: GeneratedCouncilData }) => {
       <td data-sort={cyclewaysToRoadsRatio}>{formatRatio(cyclewaysToRoadsRatio)}</td>
 
       <td>
-        <LinkToOverpassQuery queryStr={roadsQuery}>
+        <LinkToOverpassQuery queryStr={generateQueryOrUndefined("roadsQuery", relationId, overpassQueryStrings)}>
           {formatLengthInKm(roadsLength)}
         </LinkToOverpassQuery>
       </td>
       <td>
-        <LinkToOverpassQuery queryStr={safeStreetsQuery}>
+        <LinkToOverpassQuery queryStr={generateQueryOrUndefined("safeStreetsQuery", relationId, overpassQueryStrings)}>
           {formatLengthInKm(safeStreetsLength)}
         </LinkToOverpassQuery>
       </td>
 
       <td>
-        <LinkToOverpassQuery queryStr={dedicatedCyclewaysQuery}>
+        <LinkToOverpassQuery queryStr={generateQueryOrUndefined("dedicatedCyclewaysQuery", relationId, overpassQueryStrings)}>
           {formatLengthInKm(dedicatedCyclewaysLength)}
         </LinkToOverpassQuery>
       </td>
       <td>
-        <LinkToOverpassQuery queryStr={sharedPathsQuery}>
+        <LinkToOverpassQuery queryStr={generateQueryOrUndefined("sharedPathsQuery", relationId, overpassQueryStrings)}>
           {formatLengthInKm(sharedPathsLength)}
         </LinkToOverpassQuery>
       </td>
       <td>
-        <LinkToOverpassQuery queryStr={onRoadCycleLanesQuery}>
+        <LinkToOverpassQuery queryStr={generateQueryOrUndefined("onRoadCycleLanesQuery", relationId, overpassQueryStrings)}>
           {formatLengthInKm(onRoadCycleLanesLength)}
         </LinkToOverpassQuery>
       </td>
       <td>
-        <LinkToOverpassQuery queryStr={underConstructionCyclewaysQuery}>
+        <LinkToOverpassQuery queryStr={generateQueryOrUndefined("underConstructionCyclewaysQuery", relationId, overpassQueryStrings)}>
           {formatLengthInKm(underConstructionCyclewaysLength)}
         </LinkToOverpassQuery>
       </td>
       <td>
-        <LinkToOverpassQuery queryStr={proposedCyclewaysQuery}>
+        <LinkToOverpassQuery queryStr={generateQueryOrUndefined("proposedCyclewaysQuery", relationId, overpassQueryStrings)}>
           {formatLengthInKm(proposedCyclewaysLength)}
         </LinkToOverpassQuery>
       </td>

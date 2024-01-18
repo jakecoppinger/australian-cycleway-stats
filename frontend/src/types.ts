@@ -1,39 +1,3 @@
-
-export interface GeneratedCouncilData {
-  councilNameEnglish?: string | undefined,
-  "councilName": string;
-  "relationId": number;
-  "dedicatedCyclewaysLength": number;
-  "roadsLength": number;
-  "onRoadCycleLanesLength": number;
-  "sharedPathsLength": number;
-  "dedicatedCyclewaysQuery": string;
-  "roadsQuery": string;
-  "onRoadCycleLanesQuery": string;
-  "sharedPathsQuery": string;
-  // "relationInfoQuery": string;
-  cyclewaysToRoadsRatio: number | null,
-  /** Includes dedicated cycleways, shared paths, and safe streets */
-  safePathsToRoadsRatio: number | null,
-
-  safeRoadsToRoadsRatio: number | null,
-
-  /** In sq metres. Not yet working */
-  councilArea: number
-
-  underConstructionCyclewaysQuery: string
-  underConstructionCyclewaysLength: number
-  proposedCyclewaysLength: number
-  proposedCyclewaysQuery: string
-
-
-  safeStreetsQuery: string
-  safeStreetsLength: number,
-  wikipedia?: string | undefined
-  wikidata?: string | undefined
-  wikidataPopulation: number | null
-}
-
 export interface OSMWay {
   type: "way",
   id: number,

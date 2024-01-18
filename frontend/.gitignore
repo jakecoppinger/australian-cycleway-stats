@@ -2,3 +2,6 @@ node_modules
 .DS_Store
 build/
 *.swp
+
+# Copied from backend at build time
+src/shared-types.ts

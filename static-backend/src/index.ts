@@ -11,32 +11,56 @@ const { regenerateAustralianData, regenerateInternationalData } = config;
 import {
   generateDedicatedCyclewaysQuery,
   generateAllCouncilsQuery,
-  generateOnRoadCycleLanes, generateProposedCyclewaysQuery, generateRelationInfoQuery, generateRelationPointsQuery, generateRoadsQuery, generateSafeStreetsQuery, generateSharedPathsQuery, generateUnderConstructionCyclewaysQuery, generateOnewayRoadsQuery, generateBidiectionalRoadsQuery, generateRelationsInfoQuery,
+  generateOnRoadCycleLanes,
+  generateProposedCyclewaysQuery,
+  generateRelationInfoQuery,
+  generateRelationPointsQuery,
+  generateRoadsQuery,
+  generateSafeStreetsQuery,
+  generateSharedPathsQuery,
+  generateUnderConstructionCyclewaysQuery,
+  generateOnewayRoadsQuery,
+  generateBidiectionalRoadsQuery,
+  generateRelationsInfoQuery,
 } from "./utils/overpass-queries.js";
-
-import { GeneratedCouncilData, OSMNode, OSMRelation, OSMWay } from "./types.js";
+import { RelationStatsObject, StatsFile } from './shared-types.js';
+import { OSMNode, OSMRelation, OSMWay } from "./types.js";
 import { getLengthOfAllWays } from "./utils/osm-geometry-utils.js";
 import { cachedFunctionCall } from './utils/cached-function-call.js';
 import { getPopulation } from './api/wikidata.js';
 
 const jsonRelativeOutputPath = '../frontend/src/data/'
 
+const internationalExampleRelationIds = [
+  47811, // Amsterdam (level 8)
+  11960504, // Amsterdam city (suburb)
+  2192363, // Copenhagen (admin 7)
+  7426387, // Bogotá (admin 7)
+  2186660, // Frederiksberg,
+  7444, // Paris (level 8)
+  20727, // Paris 1st Arrondissement
+  5750005, // All Sydney
+  4246124, // All Melbourne
+  2354197, // ACT
+  44915, // Milan (level 8)
+  8398124, // Manhattan (level 7)
+];
+
 /**
  * Function that takes an object and saves it to a JSON file.
  */
-async function saveObjectToJsonFile(object: any, fileName: string) {
+async function saveObjectToJsonFile(object: StatsFile, fileName: string) {
+  if (object === undefined) {
+    throw new Error('Cannot save undefined object to JSON');
+  }
   const writeFile = fs.promises.writeFile;
   const jsonString = JSON.stringify(object);
   await writeFile(fileName, jsonString);
 }
 
-// only for debug
-const councilOsmRelationIds =
-  [
-    1251066, // City of sydney
-    2404870, // city of melbourne
-  ]
-
+/**
+ * Not yet working
+ */
 async function generateCouncilArea(relationId: number): Promise<number> {
   const relationPoints = await cachedOverpassTurboRequest(generateRelationPointsQuery(relationId)) as (OSMNode | OSMWay)[];
   const coords = (relationPoints
@@ -67,12 +91,11 @@ async function generateRoadsLength(relationId: number): Promise<number> {
 }
 
 const outlierRelationIds: number[] = [
-  16694855, // Kings park
-  11716544, // Darwin Waterfront Precinct Municipality
+  16694855, // Kings park - it's only park, no houses or buildings
+  11716544, // Darwin Waterfront Precinct Municipality - only a port
 ]
 
-async function relationsToSummaries(relations: OSMRelation[]): Promise<GeneratedCouncilData[]> {
-
+async function relationsToSummaries(relations: OSMRelation[]): Promise<StatsFile> {
   const allCouncils = relations
     .map(
       (relation) => ({
@@ -84,9 +107,28 @@ async function relationsToSummaries(relations: OSMRelation[]): Promise<Generated
     .filter((relation) => !outlierRelationIds.includes(relation.relationId))
     .filter((relation) => !config.debug || relation.name === "Council of the City of Sydney")
 
+  /**
+   * Used for generating queries. This number is then replaced on the frontend to generate
+   * queries for a given relation ID.
+   */
+  const magicRelationNumber = 999999;
+  const overpassQueryStrings: Record<string, string> = {
+    dedicatedCyclewaysQuery: generateDedicatedCyclewaysQuery(magicRelationNumber),
+    allCouncilsQuery: generateAllCouncilsQuery(magicRelationNumber),
+    onRoadCycleLanesQuery: generateOnRoadCycleLanes(magicRelationNumber),
+    proposedCyclewaysQuery: generateProposedCyclewaysQuery(magicRelationNumber),
+    relationInfoQuery: generateRelationInfoQuery(magicRelationNumber),
+    relationPointsQuery: generateRelationPointsQuery(magicRelationNumber),
+    roadsQuery: generateRoadsQuery(magicRelationNumber),
+    safeStreetsQuery: generateSafeStreetsQuery(magicRelationNumber),
+    sharedPathsQuery: generateSharedPathsQuery(magicRelationNumber),
+    underConstructionCyclewaysQuery: generateUnderConstructionCyclewaysQuery(magicRelationNumber),
+    onewayRoadsQuery: generateOnewayRoadsQuery(magicRelationNumber),
+    bidirectionalRoadsQuery: generateBidiectionalRoadsQuery(magicRelationNumber),
+    relationsInfoQuery: generateRelationsInfoQuery([magicRelationNumber]),
+  };
 
-
-  let dataByCouncil: GeneratedCouncilData[] = [];
+  let dataByCouncil: RelationStatsObject[] = [];
   for (let i = 0; i < allCouncils.length; i++) {
     const council = allCouncils[i];
     const { relationId, wikipedia, wikidata } = council;
@@ -117,7 +159,6 @@ async function relationsToSummaries(relations: OSMRelation[]): Promise<Generated
       await cachedOverpassTurboRequest(sharedPathsQuery) as OSMWay[]
     )
 
-
     const underConstructionCyclewaysQuery = generateUnderConstructionCyclewaysQuery(relationId);
     const underConstructionCyclewaysLength = getLengthOfAllWays(
       await cachedOverpassTurboRequest(underConstructionCyclewaysQuery) as OSMWay[]
@@ -143,18 +184,13 @@ async function relationsToSummaries(relations: OSMRelation[]): Promise<Generated
       ? (dedicatedCyclewaysLength + sharedPathsLength + safeStreetsLength) / roadsLength
       : null;
 
-
-    // const waysLength = generateWayLengthLookup(rawData);
-    // const waysStats = generateWayLengthStats(rawData, waysLength);
-
-    const generatedCouncilData: GeneratedCouncilData = {
+    const generatedCouncilData: RelationStatsObject = {
       councilName, relationId, dedicatedCyclewaysLength, roadsLength,
       onRoadCycleLanesLength, sharedPathsLength,
-      dedicatedCyclewaysQuery, roadsQuery, onRoadCycleLanesQuery, sharedPathsQuery,
       cyclewaysToRoadsRatio, safePathsToRoadsRatio, councilArea,
-      underConstructionCyclewaysQuery, underConstructionCyclewaysLength, 
-      proposedCyclewaysLength, proposedCyclewaysQuery,
-      safeStreetsQuery, safeStreetsLength, wikipedia, wikidata, wikidataPopulation,
+      underConstructionCyclewaysLength,
+      proposedCyclewaysLength,
+      safeStreetsLength, wikipedia, wikidata, wikidataPopulation,
       safeRoadsToRoadsRatio, councilNameEnglish
     };
 
@@ -172,15 +208,13 @@ async function relationsToSummaries(relations: OSMRelation[]): Promise<Generated
     return b.safePathsToRoadsRatio - a.safePathsToRoadsRatio;
   });
 
-  return sortedDataByCouncil;
+  return { areas: sortedDataByCouncil, overpassQueryStrings };
 }
 
 async function main() {
   console.log("Starting generation...");
   if (regenerateAustralianData) {
-    // NSW: 2316593
-
-    const nswRelationId = 2316593;
+    // const nswRelationId = 2316593; // If needed for deubg
     const australiaRelationId = 80500;
     const allCouncilsQuery = generateAllCouncilsQuery(australiaRelationId);
     const allCouncilRaw = await cachedOverpassTurboRequest(allCouncilsQuery) as OSMRelation[];
@@ -189,29 +223,14 @@ async function main() {
 
     await saveObjectToJsonFile(
       sortedDataByCouncil,
-      `${jsonRelativeOutputPath}data-by-council.json`,
+      `${jsonRelativeOutputPath}australian-data-by-council.json`,
     );
-    console.log("Saved data-by-council.json");
+    console.log("Saved australian-data-by-council.json");
   } else {
     console.log('Skipping Australian data generation');
   }
 
-
   if (regenerateInternationalData) {
-    const internationalExampleRelationIds = [
-      47811, // Amsterdam (level 8)
-      11960504, // Amsterdam city (suburb)
-      2192363, // Copenhagen (admin 7)
-      7426387, // Bogotá (admin 7)
-      2186660, // Frederiksberg,
-      7444, // Paris (level 8)
-      20727, // Paris 1st Arrondissement
-      5750005, // All Sydney
-      4246124, // All Melbourne
-      2354197, // ACT
-      44915, // Milan (level 8)
-      8398124, // Manhattan (level 7)
-    ]
     const internationalExampleRelationsQuery = generateRelationsInfoQuery(internationalExampleRelationIds);
     const internationalRelations = await cachedOverpassTurboRequest(internationalExampleRelationsQuery) as OSMRelation[];
     const internationalAreasSummaries = await relationsToSummaries(internationalRelations);
@@ -224,6 +243,7 @@ async function main() {
   }
   console.log('done!');
 }
+
 main();
 
 // population sort

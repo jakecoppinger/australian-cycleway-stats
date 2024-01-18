@@ -5,30 +5,12 @@
   "dependencies": {
     "@emotion/react": "^11.11.3",
     "@emotion/styled": "^11.11.0",
-    "@supabase/supabase-js": "^2.33.2",
-    "@testing-library/jest-dom": "^6.1.3",
-    "@testing-library/react": "^14.0.0",
-    "@testing-library/user-event": "^14.5.0",
-    "@types/jest": "^29.5.4",
-    "@types/node": "^20.6.1",
-    "@types/react": "^18.2.21",
-    "@types/react-dom": "^18.2.7",
-    "@types/react-router-hash-link": "^2.4.6",
-    "buffer": "^6.0.3",
-    "mapbox-gl": "^2.15.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-map-gl": "^7.1.6",
     "react-router-dom": "^6.16.0",
-    "react-router-hash-link": "^2.4.3",
     "react-scripts": "5.0.1",
-    "rsuite": "^5.40.0",
     "sortable-tablesort": "^3.1.0",
-    "stream": "0.0.2",
-    "timers": "^0.1.1",
-    "timers-browserify": "^2.0.12",
-    "typescript": "^5.2.2",
-    "xml2js": "^0.6.2"
+    "typescript": "^5.2.2"
   },
   "overrides": {
     "react-scripts": {
@@ -36,10 +18,11 @@
     }
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "start": "npm run copy-shared-types && react-scripts start",
+    "build": "npm run copy-shared-types && react-scripts build",
+    "test": "npm run copy-shared-types && react-scripts test",
+    "eject": "react-scripts eject",
+    "copy-shared-types": "cp ../static-backend/src/shared-types.ts src/shared-types.ts && echo \"Copied shared types.\""
   },
   "eslintConfig": {
     "extends": "react-app"
@@ -62,6 +45,9 @@
   },
   "homepage": "",
   "devDependencies": {
-    "@types/xml2js": "^0.4.12"
+    "@types/jest": "^29.5.4",
+    "@types/node": "^20.6.1",
+    "@types/react": "^18.2.21",
+    "@types/react-dom": "^18.2.7"
   }
 }
