@@ -273,7 +273,7 @@ const CouncilTable = ({
           <th>{"Safe roads (≤30km/h) (km)"}</th>
           <th>Dedicated cycleways (km)</th>
           <th>Shared paths (km)</th>
-          <th>On road lanes ("dooring lane") (km)</th>
+          <th>Painted on road "dooring lanes" (km)</th>
           <th>Under construction cycleways (km)</th>
           <th>Proposed cycleways (km)</th>
         </tr>

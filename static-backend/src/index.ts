@@ -25,7 +25,7 @@ import {
 } from "./utils/overpass-queries.js";
 import { RelationStatsObject, StatsFile } from './shared-types.js';
 import { OSMNode, OSMRelation, OSMWay } from "./types.js";
-import { getLengthOfAllWays } from "./utils/osm-geometry-utils.js";
+import { getLengthOfAllWays, getWarnings } from "./utils/osm-geometry-utils.js";
 import { cachedFunctionCall } from './utils/cached-function-call.js';
 import { getPopulation } from './api/wikidata.js';
 
@@ -241,7 +241,9 @@ async function main() {
   } else {
     console.log('Skipping international data generation');
   }
-  console.log('done!');
+  console.log('Done!');
+  console.log(`Experienced ${getWarnings().length} warnings.`)
+  console.log(`Offending way IDs:\n${getWarnings().map((warning) => warning.wayId).join(', ')}`);
 }
 
 main();
