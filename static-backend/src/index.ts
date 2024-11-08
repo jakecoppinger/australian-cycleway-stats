@@ -5,7 +5,7 @@ import {
   cachedOverpassTurboRequest
 } from "./api/overpass.js";
 
-import { config} from './config.js';
+import { config } from './config.js';
 
 import {
   generateDedicatedCyclewaysQuery,
@@ -213,39 +213,84 @@ async function relationsToSummaries(relations: OSMRelation[], overpassEndpoint: 
   return { areas: sortedDataByCouncil, overpassQueryStrings };
 }
 
+/**
+ * Request all councils in Australia, then:
+ * - request data for each council and cache the results of the Overpass request into a JSON file.
+ * - crunch all the numbers for all the councils and output a JSON file.
+ *
+ * Shouldn't be run in parallel with other functions to generate data if they use the same Overpass
+ * endpoint (to limit load).
+ */
+async function generateAustalianData() {
+  const overpassEndpoint = config.overpassApiEndpoints.australia
+  // const nswRelationId = 2316593; // If needed for deubg
+  const australiaRelationId = 80500;
+  const allCouncilsQuery = generateAllCouncilsQuery(australiaRelationId);
+  const allCouncilRaw = await cachedOverpassTurboRequest({ request: allCouncilsQuery, overpassEndpoint }) as OSMRelation[];
+
+  const sortedDataByCouncil = await relationsToSummaries(allCouncilRaw, overpassEndpoint);
+
+  await saveObjectToJsonFile(
+    sortedDataByCouncil,
+    `${jsonRelativeOutputPath}australian-data-by-council.json`,
+  );
+  console.log("Saved australian-data-by-council.json");
+}
+
+/**
+ * Request specific (hardcoded) relations of interest around the world, then:
+ * - request data for each relation and cache the results of the Overpass request into a JSON file.
+ * - crunch all the numbers for all the relations and output a JSON file.
+ *
+ * Shouldn't be run in parallel with other functions to generate data if they use the same Overpass
+ * endpoint (to limit load).
+ */
+async function generateInternationalData() {
+  const overpassEndpoint = config.overpassApiEndpoints.default;
+  const internationalExampleRelationsQuery = generateRelationsInfoQuery(internationalExampleRelationIds);
+  const internationalRelations = await cachedOverpassTurboRequest({ request: internationalExampleRelationsQuery, overpassEndpoint }) as OSMRelation[];
+  const internationalAreasSummaries = await relationsToSummaries(internationalRelations, overpassEndpoint);
+  await saveObjectToJsonFile(
+    internationalAreasSummaries,
+    `${jsonRelativeOutputPath}international-areas.json`,
+  );
+}
+
 async function main() {
   console.log("Starting generation...");
-  if (!config.skipRegeneratingAustralianData) {
-    const overpassEndpoint = config.overpassApiEndpoints.australia
-    // const nswRelationId = 2316593; // If needed for deubg
-    const australiaRelationId = 80500;
-    const allCouncilsQuery = generateAllCouncilsQuery(australiaRelationId);
-    const allCouncilRaw = await cachedOverpassTurboRequest({ request: allCouncilsQuery, overpassEndpoint }) as OSMRelation[];
 
-    const sortedDataByCouncil = await relationsToSummaries(allCouncilRaw, overpassEndpoint);
+  /**
+   * Only run in parallel if the Australian endpoint is different to the international one,
+   * we're not in debug mode, and we're not skipping data generation.
+   */
+  const runInParallel =
+    config.overpassApiEndpoints.australia !== config.overpassApiEndpoints.default
+    && !config.debug
+    && config.skipRegeneratingAustralianData === false
+    && config.skipRegeneratingInternationalData === false;
 
-    await saveObjectToJsonFile(
-      sortedDataByCouncil,
-      `${jsonRelativeOutputPath}australian-data-by-council.json`,
-    );
-    console.log("Saved australian-data-by-council.json");
+  if (runInParallel) {
+    console.log('Running in parallel...');
+    await Promise.all([
+      generateAustalianData(),
+      generateInternationalData()
+    ]);
+    console.log('All parallel tasks done!');
   } else {
-    console.log('Skipping Australian data generation');
-  }
+    console.log('Running sequentially...');
+    if (!config.skipRegeneratingAustralianData) {
+      generateAustalianData();
+    } else {
+      console.log('Skipping Australian data generation');
+    }
 
-  if (!config.skipRegeneratingInternationalData) {
-    const overpassEndpoint = config.overpassApiEndpoints.default;
-    const internationalExampleRelationsQuery = generateRelationsInfoQuery(internationalExampleRelationIds);
-    const internationalRelations = await cachedOverpassTurboRequest({ request: internationalExampleRelationsQuery, overpassEndpoint }) as OSMRelation[];
-    const internationalAreasSummaries = await relationsToSummaries(internationalRelations, overpassEndpoint);
-    await saveObjectToJsonFile(
-      internationalAreasSummaries,
-      `${jsonRelativeOutputPath}international-areas.json`,
-    );
-  } else {
-    console.log('Skipping international data generation');
+    if (!config.skipRegeneratingInternationalData) {
+      generateInternationalData();
+    } else {
+      console.log('Skipping international data generation');
+    }
+    console.log('Done sequential runs!');
   }
-  console.log('Done!');
   console.log(`Experienced ${getWarnings().length} warnings.`)
   console.log(`Offending way IDs:\n${getWarnings().map((warning) => warning.wayId).join(', ')}`);
 }
