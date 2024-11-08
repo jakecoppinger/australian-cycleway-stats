@@ -150,11 +150,15 @@ rel(${relationId});map_to_area->.region;
 out geom;
 `;
 
+/**
+ * FInd all councils with admin_level=6.
+ * Exclude unincorporated areas.
+ */
 export const generateAllCouncilsQuery = (relationId: number) => `
 [out:json][timeout:25];
 rel(${relationId});map_to_area->.searchArea;
 (
-  relation["admin_level"="6"](area.searchArea);
+  relation["admin_level"="6"]["boundary_type"!="unincorporated area"](area.searchArea);
 );
 out tags;
 `;

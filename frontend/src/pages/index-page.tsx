@@ -242,6 +242,10 @@ export const IndexPageComponent = () => {
             </a>
             .
           </p>
+          <p>Last full data cache invalidation of cycleway data on 2024-11-08. All data has been fetched
+            from Overpass/OSM since then. Currently no guarantee it has <i>not</i> been updated since then
+            due to partial cache invalidation via cache misses on the hashed query (in case of query
+            changes). PRs welcome to improve versioning consistency!</p>
         </footer>
       </div>
     </Fragment>
