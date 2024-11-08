@@ -2,14 +2,15 @@ import { config } from "../config.js";
 import { OSMNode, OSMRelation, OSMWay } from "../types.js";
 import { cachedFunctionCall } from "../utils/cached-function-call.js";
 
-export async function cachedOverpassTurboRequest(input: string): Promise<(OSMNode | OSMWay | OSMRelation)[]> {
-  return cachedFunctionCall(input, overpassTurboRequest);
+export async function cachedOverpassTurboRequest({ request, overpassEndpoint }: 
+  { request: string, overpassEndpoint: string }): Promise<(OSMNode | OSMWay | OSMRelation)[]> {
+  return cachedFunctionCall({request, overpassEndpoint}, overpassTurboRequest);
 }
 
 
-export async function overpassTurboRequest(request: string): Promise<(OSMNode | OSMWay | OSMRelation)[]> {
-  const apiUrl = config.overpassApi
-  console.log(`Started POST request at ${new Date().toISOString()}`);
+export async function overpassTurboRequest({ request, overpassEndpoint }: { request: string, overpassEndpoint: string }): Promise<(OSMNode | OSMWay | OSMRelation)[]> {
+  const apiUrl = overpassEndpoint ? overpassEndpoint : config.overpassApiEndpoints.default
+  console.log(`Started POST request to ${overpassEndpoint} at ${new Date().toISOString()}...`);
 
   const response = await fetch(apiUrl, {
     method: 'POST',

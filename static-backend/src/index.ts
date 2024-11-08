@@ -5,8 +5,7 @@ import {
   cachedOverpassTurboRequest
 } from "./api/overpass.js";
 
-import { config } from './config.js';
-const { regenerateAustralianData, regenerateInternationalData } = config;
+import { config} from './config.js';
 
 import {
   generateDedicatedCyclewaysQuery,
@@ -61,8 +60,11 @@ async function saveObjectToJsonFile(object: StatsFile, fileName: string) {
 /**
  * Not yet working
  */
-async function generateCouncilArea(relationId: number): Promise<number> {
-  const relationPoints = await cachedOverpassTurboRequest(generateRelationPointsQuery(relationId)) as (OSMNode | OSMWay)[];
+async function generateCouncilArea(relationId: number, overpassEndpoint: string): Promise<number> {
+  const relationPoints = await cachedOverpassTurboRequest({
+    request: generateRelationPointsQuery(relationId),
+    overpassEndpoint
+  }) as (OSMNode | OSMWay)[];
   const coords = (relationPoints
     .filter((node) => node.type === 'node') as OSMNode[])
     .filter((node) => {
@@ -81,12 +83,12 @@ async function generateCouncilArea(relationId: number): Promise<number> {
 }
 
 
-async function generateRoadsLength(relationId: number): Promise<number> {
+async function generateRoadsLength(relationId: number, overpassEndpoint: string): Promise<number> {
   // const onewayRoads = await cachedOverpassTurboRequest(generateOnewayRoadsQuery(relationId)) as OSMWay[];
   // const bidirectionalRoads = await cachedOverpassTurboRequest(generateBidiectionalRoadsQuery(relationId)) as OSMWay[];
   // return (getLengthOfAllWays(onewayRoads) / 2) + getLengthOfAllWays(bidirectionalRoads);
 
-  const roads = await cachedOverpassTurboRequest(generateRoadsQuery(relationId)) as OSMWay[];
+  const roads = await cachedOverpassTurboRequest({ request: generateRoadsQuery(relationId), overpassEndpoint }) as OSMWay[];
   return getLengthOfAllWays(roads);
 }
 
@@ -95,7 +97,7 @@ const outlierRelationIds: number[] = [
   11716544, // Darwin Waterfront Precinct Municipality - only a port
 ]
 
-async function relationsToSummaries(relations: OSMRelation[]): Promise<StatsFile> {
+async function relationsToSummaries(relations: OSMRelation[], overpassEndpoint: string): Promise<StatsFile> {
   const allCouncils = relations
     .map(
       (relation) => ({
@@ -136,42 +138,42 @@ async function relationsToSummaries(relations: OSMRelation[]): Promise<StatsFile
       ? await cachedFunctionCall(wikidata, getPopulation) || null
       : null;
 
-    const councilArea = await generateCouncilArea(relationId);
+    const councilArea = await generateCouncilArea(relationId, overpassEndpoint);
 
     const relationInfoQuery = generateRelationInfoQuery(relationId);
-    const relationInfo = (await cachedOverpassTurboRequest(relationInfoQuery))[0] as OSMRelation;
+    const relationInfo = (await cachedOverpassTurboRequest({ request: relationInfoQuery, overpassEndpoint }))[0] as OSMRelation;
     const councilName = relationInfo.tags.name || '(area missing name)';
     const councilNameEnglish = relationInfo.tags['name:en'];
 
     const dedicatedCyclewaysQuery = generateDedicatedCyclewaysQuery(relationId)
     const dedicatedCyclewaysLength = getLengthOfAllWays(
-      await cachedOverpassTurboRequest(dedicatedCyclewaysQuery) as OSMWay[]
+      await cachedOverpassTurboRequest({ request: dedicatedCyclewaysQuery, overpassEndpoint }) as OSMWay[]
     )
     const roadsQuery = generateRoadsQuery(relationId)
-    const roadsLength = await generateRoadsLength(relationId);
+    const roadsLength = await generateRoadsLength(relationId, overpassEndpoint);
 
     const onRoadCycleLanesQuery = generateOnRoadCycleLanes(relationId)
     const onRoadCycleLanesLength = getLengthOfAllWays(
-      await cachedOverpassTurboRequest(onRoadCycleLanesQuery) as OSMWay[]
+      await cachedOverpassTurboRequest({ request: onRoadCycleLanesQuery, overpassEndpoint }) as OSMWay[]
     )
     const sharedPathsQuery = generateSharedPathsQuery(relationId)
     const sharedPathsLength = getLengthOfAllWays(
-      await cachedOverpassTurboRequest(sharedPathsQuery) as OSMWay[]
+      await cachedOverpassTurboRequest({ request: sharedPathsQuery, overpassEndpoint }) as OSMWay[]
     )
 
     const underConstructionCyclewaysQuery = generateUnderConstructionCyclewaysQuery(relationId);
     const underConstructionCyclewaysLength = getLengthOfAllWays(
-      await cachedOverpassTurboRequest(underConstructionCyclewaysQuery) as OSMWay[]
+      await cachedOverpassTurboRequest({ request: underConstructionCyclewaysQuery, overpassEndpoint }) as OSMWay[]
     )
 
     const proposedCyclewaysQuery = generateProposedCyclewaysQuery(relationId);
     const proposedCyclewaysLength = getLengthOfAllWays(
-      await cachedOverpassTurboRequest(proposedCyclewaysQuery) as OSMWay[]
+      await cachedOverpassTurboRequest({ request: proposedCyclewaysQuery, overpassEndpoint }) as OSMWay[]
     )
 
     const safeStreetsQuery = generateSafeStreetsQuery(relationId);
     const safeStreetsLength = getLengthOfAllWays(
-      await cachedOverpassTurboRequest(safeStreetsQuery) as OSMWay[]
+      await cachedOverpassTurboRequest({ request: safeStreetsQuery, overpassEndpoint }) as OSMWay[]
     )
 
     const safeRoadsToRoadsRatio = roadsLength > 0
@@ -213,13 +215,14 @@ async function relationsToSummaries(relations: OSMRelation[]): Promise<StatsFile
 
 async function main() {
   console.log("Starting generation...");
-  if (regenerateAustralianData) {
+  if (!config.skipRegeneratingAustralianData) {
+    const overpassEndpoint = config.overpassApiEndpoints.australia
     // const nswRelationId = 2316593; // If needed for deubg
     const australiaRelationId = 80500;
     const allCouncilsQuery = generateAllCouncilsQuery(australiaRelationId);
-    const allCouncilRaw = await cachedOverpassTurboRequest(allCouncilsQuery) as OSMRelation[];
+    const allCouncilRaw = await cachedOverpassTurboRequest({ request: allCouncilsQuery, overpassEndpoint }) as OSMRelation[];
 
-    const sortedDataByCouncil = await relationsToSummaries(allCouncilRaw);
+    const sortedDataByCouncil = await relationsToSummaries(allCouncilRaw, overpassEndpoint);
 
     await saveObjectToJsonFile(
       sortedDataByCouncil,
@@ -230,10 +233,11 @@ async function main() {
     console.log('Skipping Australian data generation');
   }
 
-  if (regenerateInternationalData) {
+  if (!config.skipRegeneratingInternationalData) {
+    const overpassEndpoint = config.overpassApiEndpoints.default;
     const internationalExampleRelationsQuery = generateRelationsInfoQuery(internationalExampleRelationIds);
-    const internationalRelations = await cachedOverpassTurboRequest(internationalExampleRelationsQuery) as OSMRelation[];
-    const internationalAreasSummaries = await relationsToSummaries(internationalRelations);
+    const internationalRelations = await cachedOverpassTurboRequest({ request: internationalExampleRelationsQuery, overpassEndpoint }) as OSMRelation[];
+    const internationalAreasSummaries = await relationsToSummaries(internationalRelations, overpassEndpoint);
     await saveObjectToJsonFile(
       internationalAreasSummaries,
       `${jsonRelativeOutputPath}international-areas.json`,

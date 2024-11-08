@@ -160,7 +160,7 @@ export const IndexPageComponent = () => {
           column can go above 100% as it includes non-road paths!
         </p>
         <p>See <a href="#notes-on-methodology">Notes on methodology</a> section for more details
-        on what is and isn't included in each metric.</p>
+          on what is and isn't included in each metric.</p>
         <CouncilTable dataByCouncil={internationalAreas}></CouncilTable>
         <PageHeading>Australian councils</PageHeading>
         <p>
@@ -169,7 +169,7 @@ export const IndexPageComponent = () => {
           boundaries.
         </p>
         <p>See <a href="#notes-on-methodology">Notes on methodology</a> section for more details
-        on what is and isn't included in each metric.</p>
+          on what is and isn't included in each metric.</p>
         <CouncilTable dataByCouncil={dataByCouncil}></CouncilTable>
 
         <p>If you want smartphone navigation directions using this data, see blog post <a
@@ -208,9 +208,9 @@ export const IndexPageComponent = () => {
               </li>
             </ul>
             <li>Substantial lengths of separated cycleways in rural councils may be false positives
-               due to mountain bike trails incorrectly tagged as cycleways (cycleways with
-               non-sealed surfaces are excluded). Viewing the map of dedicated cycleways can
-               quickly identify these issues.</li>
+              due to mountain bike trails incorrectly tagged as cycleways (cycleways with
+              non-sealed surfaces are excluded). Viewing the map of dedicated cycleways can
+              quickly identify these issues.</li>
           </ul>
           <PageHeading>
             Possible future improvements
@@ -299,7 +299,7 @@ function generateQueryOrUndefined(queryName: string, relationId: number, overpas
   return overpassQueryStrings[queryName] ? hydrateQueryString(overpassQueryStrings[queryName], relationId) : undefined
 }
 
-const CouncilTableRow = ({ row, overpassQueryStrings }: { row: RelationStatsObject, overpassQueryStrings: Record<string,string> }) => {
+const CouncilTableRow = ({ row, overpassQueryStrings }: { row: RelationStatsObject, overpassQueryStrings: Record<string, string> }) => {
   const {
     // relationInfoQuery,
     councilName,
