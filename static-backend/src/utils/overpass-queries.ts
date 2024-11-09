@@ -63,10 +63,10 @@ rel(${relationId});map_to_area->.region;
   way(area.region)["cycleway"="lane"]["cycleway:lane"="exclusive"]["maxspeed"~"^(5|10|15|20|25|30)$"];
 
   // Include paved paths designated for bicycles
-  way(area.region)["highway=path"]["bicycle"="designated"]["segregated"!="no"]${excludeNonSealedSurfaces};
+  way(area.region)["highway=path"]["bicycle"="designated"]["segregated"!="no"]${excludeInaccessible}${excludeNonSealedSurfaces};
 
   // Include bicycle ramps
-  way(area.region)["ramp:bicycle"="yes"];
+  way(area.region)${excludeInaccessible}["ramp:bicycle"="yes"];
 );
 out geom;
 `;
@@ -87,14 +87,14 @@ rel(${relationId});map_to_area->.region;
   // See overpass-turbo.eu/s/1FMP for these cases.
 
   // Include shared paths
-  way(area.region)["highway"="cycleway"]["segregated"="no"]${excludeNonSealedSurfaces};
-  way(area.region)["highway"="cycleway"][!"segregated"]["foot"~"yes|designated"]${excludeNonSealedSurfaces};
+  way(area.region)["highway"="cycleway"]["segregated"="no"]${excludeInaccessible}${excludeNonSealedSurfaces};
+  way(area.region)["highway"="cycleway"][!"segregated"]["foot"~"yes|designated"]${excludeInaccessible}${excludeNonSealedSurfaces};
 
   // Include paved paths as long as they aren't shared with pedestrians
-  way(area.region)["highway=path"]["bicycle"="designated"]["segregated"="yes"]${excludeNonSealedSurfaces};
+  way(area.region)["highway=path"]["bicycle"="designated"]["segregated"="yes"]${excludeInaccessible}${excludeNonSealedSurfaces};
 
   // Include pedestrian streets tagged as explicitly allowing cycling (eg. Martin Place, Sydney)
-  way(area.region)["highway"="pedestrian"]["bicycle"="yes"]${excludeNonSealedSurfaces};
+  way(area.region)["highway"="pedestrian"]["bicycle"="yes"]${excludeInaccessible}${excludeNonSealedSurfaces};
 
   way(area.region)["cycleway"="track"]["foot"~"designated|yes"]${excludeInaccessible}${excludeNonSealedSurfaces};
   way(area.region)["cycleway"="track"]["highway"="footway"]${excludeInaccessible}${excludeNonSealedSurfaces};
@@ -108,7 +108,7 @@ export const generateSafeStreetsQuery = (relationId: number) => `
 rel(${relationId});map_to_area->.region;
 (
   // Include all roads with a specified speed limit of <= 30kmh (except pedestrian streets that may disallow biycles by default)...
-  way(area.region)${roadsQuerySelector}["highway"!="pedestrian"]["maxspeed"~"^(5|10|15|20|25|30)$"]
+  way(area.region)${excludeInaccessible}${roadsQuerySelector}["highway"!="pedestrian"]["maxspeed"~"^(5|10|15|20|25|30)$"]
   // ...but exclude roads with an exclusive cycleway lane as this is counted as a dedicated cycleway.
   ["cycleway:left:lane"!="exclusive"]
   ["cycleway:right:lane"!="exclusive"]
@@ -119,7 +119,9 @@ rel(${relationId});map_to_area->.region;
   // Eg. Many streets are signposted 30kmh in Copenhagen.
   // This doesn't pick up corner-speed advisory signs in Australia / EU as they are likely above
   // 30kmh (and if not, are likely rejected by the bikes disallowed clause for motorway links)
-  way(area.region)${roadsQuerySelector}
+  way(area.region)
+  ${roadsQuerySelector}
+  ${excludeInaccessible}
   ["maxspeed:advisory"~"^(30|25|20|15|10)$"]
   ["bicycle"!~"^(no|dismount)$"];
 
@@ -130,8 +132,9 @@ rel(${relationId});map_to_area->.region;
   // Include pedestrian streets tagged as explicitly allowing cycling as long as they have an
   // advistory speed limit <= 30kmh (or no limit marked)
   // Pedestrian streets don't imply bicycle=yes (and include George Street, Sydney)
-  way(area.region)["highway"="pedestrian"]["bicycle"="yes"]["maxspeed"!~"^(40|50|60|70|80)$"]${excludeNonSealedSurfaces};
-  way(area.region)["highway"="pedestrian"]["bicycle"="yes"]["maxspeed:advisory"~"^(5|10|15|20|25|30)$"]${excludeNonSealedSurfaces};
+  way(area.region)["highway"="pedestrian"]["bicycle"="yes"]["maxspeed"!~"^(40|50|60|70|80)$"]${excludeInaccessible}${excludeNonSealedSurfaces};
+  way(area.region)["highway"="pedestrian"]["bicycle"="yes"]["maxspeed:advisory"~"^(5|10|15|20|25|30)$"]${excludeInaccessible}${excludeNonSealedSurfaces};
+
 );
 out geom;
 `
@@ -183,7 +186,7 @@ out geom;
 `;
 
 /**
- * FInd all councils with admin_level=6.
+ * Find all councils with admin_level=6.
  * Exclude unincorporated areas.
  */
 export const generateAllCouncilsQuery = (relationId: number) => `
