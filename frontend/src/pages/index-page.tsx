@@ -67,6 +67,29 @@ export const IndexPageComponent = () => {
             Data is crowdsourced and offers no accuracy guarantees
             (but is usually more accurate than government data and Google Maps). Notably:
           </p>
+          <ul>
+            <li>
+              Transport for NSW <a
+                target="_blank"
+                rel="noopener noreferrer"
+                href="https://wiki.openstreetmap.org/wiki/TfNSW">employs contributors</a> and utilise it for routing & the basemap on the
+              {" "}<a href="https://transportnsw.info/trip">TfNSW Trip Planner</a>
+            </li>
+            <li>
+              The Department of Transport and Planning (Victoria) has <a
+                target="_blank"
+                rel="noopener noreferrer"
+                href="https://wiki.openstreetmap.org/wiki/Department_of_Transport_and_Planning_(Victoria,_Australia)">
+                taken the
+                strategic step</a> of adopting OSM as the primary data source for the
+              network maps; road, rail, train, tram and cycling:
+              <blockquote>
+                "As part of this decision the department has accepted that the
+                use encompasses the responsibility to maintain and enhance the
+                mapping content to the highest standard for all users of OSM"
+              </blockquote>
+            </li>
+          </ul>
           <p><b>If you spot any data errors:</b> Contact <a
             target="_blank"
             rel="noopener noreferrer"
@@ -96,29 +119,6 @@ export const IndexPageComponent = () => {
               rel="noopener noreferrer"
               href="https://wiki.openstreetmap.org/wiki/Australian_Mapping_Community">wiki.openstreetmap.org/wiki/Australian_Mapping_Community</a>
             {" "}(or ping me if you're in Sydney).</p>
-          <ul>
-            <li>
-              Transport for NSW <a
-                target="_blank"
-                rel="noopener noreferrer"
-                href="https://wiki.openstreetmap.org/wiki/TfNSW">employs contributors</a> and utilise it for routing & the basemap on the
-              {" "}<a href="https://transportnsw.info/trip">TfNSW Trip Planner</a>
-            </li>
-            <li>
-              The Department of Transport and Planning (Victoria) has <a
-                target="_blank"
-                rel="noopener noreferrer"
-                href="https://wiki.openstreetmap.org/wiki/Department_of_Transport_and_Planning_(Victoria,_Australia)">
-                taken the
-                strategic step</a> of adopting OSM as the primary data source for the
-              network maps; road, rail, train, tram and cycling:
-              <blockquote>
-                "As part of this decision the department has accepted that the
-                use encompasses the responsibility to maintain and enhance the
-                mapping content to the highest standard for all users of OSM"
-              </blockquote>
-            </li>
-          </ul>
 
           <p>
             <b>Data license & how to reference:</b> If you use this data, please reference as "Source: Australian Cycleway Stats, OpenStreetMap contributors" or "© Australian Cycleway Stats, OpenStreetMap contributors".</p>
