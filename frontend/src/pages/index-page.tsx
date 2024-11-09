@@ -58,6 +58,15 @@ export const IndexPageComponent = () => {
 
           <p>Click on any statistic to open a map with the relevant paths.</p>
 
+          <p>
+            <b>Data quality:</b> All data (excluding population info) is generated from the{" "}
+            <a href="https://openstreetmap.org">OpenStreetMap</a> dataset{" "}
+            which is licensed{" "}
+            <a href="https://opendatacommons.org/licenses/odbl/">ODbL</a> (open
+            source). Note that this data changes over time (as does the real world) and the query itself might change.
+            Data is crowdsourced and offers no accuracy guarantees
+            (but is usually more accurate than government data and Google Maps). Notably:
+          </p>
           <p><b>If you spot any data errors:</b> Contact <a
             target="_blank"
             rel="noopener noreferrer"
@@ -77,7 +86,7 @@ export const IndexPageComponent = () => {
               rel="noopener noreferrer"
               href="https://github.com/jakecoppinger/australian-cycleway-stats/blob/main/static-backend/src/utils/overpass-queries.ts"
             >
-              overpass-queries.ts</a>) or in the OSM data itself. You can edit OSM yourself at <a
+              overpass-queries.ts</a>) or in the OpenStreetMap data itself. You can edit OSM yourself at <a
                 target="_blank"
                 rel="noopener noreferrer"
                 href="https://openstreetmap.org">openstreetmap.org</a>
@@ -87,15 +96,6 @@ export const IndexPageComponent = () => {
               rel="noopener noreferrer"
               href="https://wiki.openstreetmap.org/wiki/Australian_Mapping_Community">wiki.openstreetmap.org/wiki/Australian_Mapping_Community</a>
             {" "}(or ping me if you're in Sydney).</p>
-          <p>
-            <b>Data quality:</b> All data (excluding population info) is generated from the{" "}
-            <a href="https://openstreetmap.org">OpenStreetMap</a> dataset{" "}
-            which is licensed{" "}
-            <a href="https://opendatacommons.org/licenses/odbl/">ODbL</a> (open
-            source). Note that this data changes over time (as does the real world) and the query itself might change.
-            Data is crowdsourced and offers no accuracy guarantees
-            (but is usually more accurate than government data and Google Maps). Notably:
-          </p>
           <ul>
             <li>
               Transport for NSW <a
@@ -160,7 +160,7 @@ export const IndexPageComponent = () => {
           column can go above 100% as it includes non-road paths!
         </p>
         <p>See <a href="#notes-on-methodology">Notes on methodology</a> section for more details
-        on what is and isn't included in each metric.</p>
+          on what is and isn't included in each metric.</p>
         <CouncilTable dataByCouncil={internationalAreas}></CouncilTable>
         <PageHeading>Australian councils</PageHeading>
         <p>
@@ -169,7 +169,7 @@ export const IndexPageComponent = () => {
           boundaries.
         </p>
         <p>See <a href="#notes-on-methodology">Notes on methodology</a> section for more details
-        on what is and isn't included in each metric.</p>
+          on what is and isn't included in each metric.</p>
         <CouncilTable dataByCouncil={dataByCouncil}></CouncilTable>
 
         <p>If you want smartphone navigation directions using this data, see blog post <a
@@ -179,6 +179,13 @@ export const IndexPageComponent = () => {
           The Best Apps for Bicycle Directions (2020)</a>.</p>
         <footer id="footer">
           <a id="notes-on-methodology"><PageHeading>Notes on methodology</PageHeading></a>
+          <p>See detailed comments in
+            <a
+              target="_blank"
+              rel="noopener noreferrer"
+              href="https://github.com/jakecoppinger/australian-cycleway-stats/blob/main/static-backend/src/utils/overpass-queries.ts"
+            >overpass-queries.ts
+            </a>for explanations of what exactly constitudes a separated cycleway, shared path, etc.</p>
           <ul>
             <li>One-way cycleways are not counted any differently to bidirectional cycleways (for simplicity)</li>
             <li>Dual carriageway roads are currently "double counted"
@@ -208,9 +215,12 @@ export const IndexPageComponent = () => {
               </li>
             </ul>
             <li>Substantial lengths of separated cycleways in rural councils may be false positives
-               due to mountain bike trails incorrectly tagged as cycleways (cycleways with
-               non-sealed surfaces are excluded). Viewing the map of dedicated cycleways can
-               quickly identify these issues.</li>
+              due to mountain bike trails incorrectly tagged as cycleways (cycleways with
+              non-sealed surfaces are excluded). Viewing the map of dedicated cycleways can
+              quickly identify these issues.</li>
+            <li>I have noticed a number of false-positive separated cycleways around Darwin when
+              they are actually shared paths. I've made a number of OSM edits to rectify this but
+              minor issues may remain.</li>
           </ul>
           <PageHeading>
             Possible future improvements
@@ -273,7 +283,7 @@ const CouncilTable = ({
           <th>{"Safe roads (≤30km/h) (km)"}</th>
           <th>Dedicated cycleways (km)</th>
           <th>Shared paths (km)</th>
-          <th>On road lanes ("dooring lane") (km)</th>
+          <th>Painted on road "dooring lanes" (km)</th>
           <th>Under construction cycleways (km)</th>
           <th>Proposed cycleways (km)</th>
         </tr>
@@ -299,7 +309,7 @@ function generateQueryOrUndefined(queryName: string, relationId: number, overpas
   return overpassQueryStrings[queryName] ? hydrateQueryString(overpassQueryStrings[queryName], relationId) : undefined
 }
 
-const CouncilTableRow = ({ row, overpassQueryStrings }: { row: RelationStatsObject, overpassQueryStrings: Record<string,string> }) => {
+const CouncilTableRow = ({ row, overpassQueryStrings }: { row: RelationStatsObject, overpassQueryStrings: Record<string, string> }) => {
   const {
     // relationInfoQuery,
     councilName,
