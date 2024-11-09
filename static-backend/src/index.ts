@@ -257,7 +257,9 @@ async function generateInternationalData() {
 }
 
 async function main() {
-  console.log("Starting generation...");
+  console.log("Starting generation!");
+  console.log(`Note: you can Ctrl-C at any time and you won't waste much time - each post request
+    is cached and will be reused on the next run. Data generation from cached requests is quick.`);
 
   /**
    * Only run in parallel if the Australian endpoint is different to the international one,
@@ -270,14 +272,14 @@ async function main() {
     && config.skipRegeneratingInternationalData === false;
 
   if (runInParallel) {
-    console.log('Running in parallel...');
+    console.log('Running Australian & international requests in parallel...');
     await Promise.all([
       generateAustalianData(),
       generateInternationalData()
     ]);
     console.log('All parallel tasks done!');
   } else {
-    console.log('Running sequentially...');
+    console.log('Running Australian & international requests in series...');
     if (!config.skipRegeneratingAustralianData) {
       generateAustalianData();
     } else {
