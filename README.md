@@ -67,7 +67,8 @@ out geom;
 
   
   nwr["crossing"="marked"](area.suburb);
-nwr["crossing"="zebra"](area.suburb);
+  nwr["crossing"="zebra"](area.suburb);
+  nwr["crossing:markings"="zebra"](area.suburb);
   
 );
 out body;
@@ -88,6 +89,7 @@ https://overpass-turbo.eu/s/1E2E
 
 nwr["crossing"="marked"]({{bbox}});
 nwr["crossing"="zebra"]({{bbox}});
+nwr["crossing:markings"="zebra"]({{bbox}});
 
 out geom;
 ```
@@ -121,7 +123,7 @@ https://dashboard.ohsome.org/#backend=ohsomeApi&groupBy=none&time=2007-10-08T00%
 - Caveats as above (on OSM history)
 
 ```
-type:node and (crossing=marked or crossing=zebra)
+type:node and (crossing=marked or crossing=zebra or crossing:markings=zebra)
 ```
 
 https://dashboard.ohsome.org/#backend=ohsomeApi&groupBy=none&time=2007-10-08T00%3A00%3A00Z%2F2023-11-11T22%3A00%3A00Z%2FP1M&filter=type%3Anode+and+%28crossing%3Dmarked+or+crossing%3Dzebra%29&measure=count&adminids=-2316593
