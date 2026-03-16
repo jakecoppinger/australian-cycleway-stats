@@ -8,6 +8,7 @@ import dataByCouncil from "../data/australian-data-by-council.json";
 import internationalAreas from "../data/international-areas.json";
 import { LinkToOverpassQuery } from "../components/LinkToOverpassQuery";
 import { StatsFile, RelationStatsObject } from "../shared-types";
+import { LinkToWikidataObject } from "../components/LinkToWikidataObject";
 
 const PageTitle = styled.h1`
   font-weight: bold;
@@ -286,7 +287,8 @@ const CouncilTable = ({
           <th>Painted on road "dooring lanes" (km)</th>
           <th>Under construction cycleways (km)</th>
           <th>Proposed cycleways (km)</th>
-          <th>Cycleway length per resident (m/person)</th>
+          <th>Separated cycleways per resident (m/person)</th>
+          <th>Separated cycleways per square kilometre (m/km²)</th>
         </tr>
       </thead>
       <tbody>
@@ -329,17 +331,29 @@ const CouncilTableRow = ({ row, overpassQueryStrings }: { row: RelationStatsObje
     relationId,
     safeRoadsToRoadsRatio,
     separatedCyclewayLengthPerResident,
+    separatedCyclewayMetresPerSquareKilometre,
+    wikidataId
   } = row;
 
   return (
     <tr>
       <td>
-        <RelationLink relationId={relationId}>{councilNameEnglish && councilNameEnglish !== councilName ? `${councilNameEnglish} (${councilName})` : councilName}</RelationLink>{" "}
+        <RelationLink relationId={relationId}>{councilNameEnglish
+          && councilNameEnglish !== councilName
+          ? `${councilNameEnglish} (${councilName})` : councilName}</RelationLink>{" "}
         {wikipedia ? (
           <WikipediaLink articleName={wikipedia}>(Wikipedia)</WikipediaLink>
         ) : null}
       </td>
-      <td data-sort={wikidataPopulation}>{formatPopulation(wikidataPopulation)}</td>
+      <td data-sort={wikidataPopulation}>
+        {wikidataId ? (
+          <LinkToWikidataObject wikidataId={wikidataId}>
+            {formatPopulation(wikidataPopulation)}
+          </LinkToWikidataObject>
+        ) : (
+          formatPopulation(wikidataPopulation)
+        )}
+      </td>
 
       <td data-sort={safePathsToRoadsRatio}>{formatRatio(safePathsToRoadsRatio)}</td>
       <td data-sort={safeRoadsToRoadsRatio}>{formatRatio(safeRoadsToRoadsRatio)}</td>
@@ -384,7 +398,11 @@ const CouncilTableRow = ({ row, overpassQueryStrings }: { row: RelationStatsObje
       </td>
       <td>
         {separatedCyclewayLengthPerResident
-          ? `${(separatedCyclewayLengthPerResident).toFixed(2)} m/resident` : "-"}
+          ? separatedCyclewayLengthPerResident.toFixed(2) : "-"}
+      </td>
+      <td>
+        {separatedCyclewayMetresPerSquareKilometre
+          ? `${(separatedCyclewayMetresPerSquareKilometre).toFixed(2)} m/km²` : "-"}
       </td>
     </tr>
   );

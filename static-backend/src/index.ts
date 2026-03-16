@@ -26,7 +26,7 @@ import { RelationStatsObject, StatsFile } from './shared-types.js';
 import { OSMNode, OSMRelation, OSMWay } from "./types.js";
 import { getLengthOfAllWays, getWarnings } from "./utils/osm-geometry-utils.js";
 import { cachedFunctionCall } from './utils/cached-function-call.js';
-import { getPopulation } from './api/wikidata.js';
+import { getArea, getPopulation } from './api/wikidata.js';
 
 const jsonRelativeOutputPath = '../frontend/src/data/'
 
@@ -137,6 +137,9 @@ async function relationsToSummaries(relations: OSMRelation[], overpassEndpoint: 
     const wikidataPopulation: number | null = wikidata
       ? await cachedFunctionCall(wikidata, getPopulation) || null
       : null;
+    const wikidataArea: number | null = wikidata
+      ? await cachedFunctionCall(wikidata, getArea) || null
+      : null;
 
     const councilArea = await generateCouncilArea(relationId, overpassEndpoint);
 
@@ -190,6 +193,10 @@ async function relationsToSummaries(relations: OSMRelation[], overpassEndpoint: 
       ? dedicatedCyclewaysLength / wikidataPopulation
       : null;
 
+    const separatedCyclewayMetresPerSquareKilometre = wikidataArea
+      ? dedicatedCyclewaysLength / wikidataArea
+      : null;
+
     const generatedCouncilData: RelationStatsObject = {
       councilName, relationId, dedicatedCyclewaysLength, roadsLength,
       onRoadCycleLanesLength, sharedPathsLength,
@@ -197,7 +204,10 @@ async function relationsToSummaries(relations: OSMRelation[], overpassEndpoint: 
       underConstructionCyclewaysLength,
       proposedCyclewaysLength,
       safeStreetsLength, wikipedia, wikidata, wikidataPopulation,
-      safeRoadsToRoadsRatio, councilNameEnglish, separatedCyclewayLengthPerResident
+      safeRoadsToRoadsRatio, councilNameEnglish,
+      separatedCyclewayLengthPerResident,
+      separatedCyclewayMetresPerSquareKilometre,
+      wikidataId: wikidata,
     };
 
     dataByCouncil.push(generatedCouncilData);

@@ -9,6 +9,8 @@ export interface StatsFile {
 
 /** Object containing all fields for a given relation */
 export interface RelationStatsObject {
+  /** eg. Q1094194 */
+  wikidataId: string | undefined;
   councilName: string;
   councilNameEnglish?: string | undefined,
 
@@ -36,4 +38,5 @@ export interface RelationStatsObject {
   wikidataPopulation: number | null
 
   separatedCyclewayLengthPerResident: number | null,
+  separatedCyclewayMetresPerSquareKilometre: number | null,
 }
