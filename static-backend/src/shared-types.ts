@@ -34,4 +34,6 @@ export interface RelationStatsObject {
   wikipedia?: string | undefined
   wikidata?: string | undefined
   wikidataPopulation: number | null
+
+  separatedCyclewayLengthPerResident: number | null,
 }

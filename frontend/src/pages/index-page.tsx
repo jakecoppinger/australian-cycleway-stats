@@ -286,6 +286,7 @@ const CouncilTable = ({
           <th>Painted on road "dooring lanes" (km)</th>
           <th>Under construction cycleways (km)</th>
           <th>Proposed cycleways (km)</th>
+          <th>Cycleway length per resident (m/person)</th>
         </tr>
       </thead>
       <tbody>
@@ -327,10 +328,8 @@ const CouncilTableRow = ({ row, overpassQueryStrings }: { row: RelationStatsObje
     wikidataPopulation,
     relationId,
     safeRoadsToRoadsRatio,
+    separatedCyclewayLengthPerResident,
   } = row;
-
-
-
 
   return (
     <tr>
@@ -382,6 +381,10 @@ const CouncilTableRow = ({ row, overpassQueryStrings }: { row: RelationStatsObje
         <LinkToOverpassQuery queryStr={generateQueryOrUndefined("proposedCyclewaysQuery", relationId, overpassQueryStrings)}>
           {formatLengthInKm(proposedCyclewaysLength)}
         </LinkToOverpassQuery>
+      </td>
+      <td>
+        {separatedCyclewayLengthPerResident
+          ? `${(separatedCyclewayLengthPerResident).toFixed(2)} m/resident` : "-"}
       </td>
     </tr>
   );

@@ -186,6 +186,10 @@ async function relationsToSummaries(relations: OSMRelation[], overpassEndpoint: 
       ? (dedicatedCyclewaysLength + sharedPathsLength + safeStreetsLength) / roadsLength
       : null;
 
+    const separatedCyclewayLengthPerResident = wikidataPopulation
+      ? dedicatedCyclewaysLength / wikidataPopulation
+      : null;
+
     const generatedCouncilData: RelationStatsObject = {
       councilName, relationId, dedicatedCyclewaysLength, roadsLength,
       onRoadCycleLanesLength, sharedPathsLength,
@@ -193,7 +197,7 @@ async function relationsToSummaries(relations: OSMRelation[], overpassEndpoint: 
       underConstructionCyclewaysLength,
       proposedCyclewaysLength,
       safeStreetsLength, wikipedia, wikidata, wikidataPopulation,
-      safeRoadsToRoadsRatio, councilNameEnglish
+      safeRoadsToRoadsRatio, councilNameEnglish, separatedCyclewayLengthPerResident
     };
 
     dataByCouncil.push(generatedCouncilData);
