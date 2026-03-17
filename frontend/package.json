@@ -21,6 +21,7 @@
     "start": "npm run copy-shared-types && react-scripts start",
     "build": "npm run copy-shared-types && react-scripts build",
     "test": "npm run copy-shared-types && react-scripts test",
+    "deploy": "npx wrangler pages deploy --project-name 'australian-cycleway-stats' ./build",
     "eject": "react-scripts eject",
     "copy-shared-types": "cp ../static-backend/src/shared-types.ts src/shared-types.ts && echo \"Copied shared types.\""
   },
