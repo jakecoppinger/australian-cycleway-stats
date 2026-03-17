@@ -10,7 +10,7 @@ export interface StatsFile {
 /** Object containing all fields for a given relation */
 export interface RelationStatsObject {
   /** eg. Q1094194 */
-  wikidataId: string | undefined;
+  wikidataId?: string;
   councilName: string;
   councilNameEnglish?: string | undefined,
 
