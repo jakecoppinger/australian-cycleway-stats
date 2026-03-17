@@ -137,9 +137,15 @@ async function relationsToSummaries(relations: OSMRelation[], overpassEndpoint: 
     const wikidataPopulation: number | null = wikidata
       ? await cachedFunctionCall(wikidata, getPopulation) || null
       : null;
-    const wikidataArea: number | null = wikidata
-      ? await cachedFunctionCall(wikidata, getArea) || null
-      : null;
+    let wikidataArea: number | null = null;
+
+    try {
+      if (wikidata) {
+        wikidataArea = await cachedFunctionCall(wikidata, getArea);
+      }
+    } catch (error) {
+      console.error(`Error fetching area data (won't be cached):`, error);
+    }
 
     const councilArea = await generateCouncilArea(relationId, overpassEndpoint);
 

@@ -402,7 +402,7 @@ const CouncilTableRow = ({ row, overpassQueryStrings }: { row: RelationStatsObje
       </td>
       <td>
         {separatedCyclewayMetresPerSquareKilometre
-          ? `${(separatedCyclewayMetresPerSquareKilometre).toFixed(2)} m/km²` : "-"}
+          ? separatedCyclewayMetresPerSquareKilometre.toFixed(2) : "-"}
       </td>
     </tr>
   );
