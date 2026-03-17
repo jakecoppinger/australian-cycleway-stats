@@ -5,7 +5,10 @@ import { createHash } from 'crypto';
  * Cached based on input string - if function is different and input is the same, it will clash
  */
 export async function cachedFunctionCall<T extends Object>(input: T, fn: (i: T) => Promise<any>): Promise<any> {
-  const hash = createHash('md5').update(JSON.stringify(input)).digest('hex');
+  const hash = createHash('md5')
+    .update(fn.name)
+    .update(JSON.stringify(input))
+    .digest('hex');
   const cachePath = path.join('./cache', `${hash}.json`);
 
   // Check if the cache file exists

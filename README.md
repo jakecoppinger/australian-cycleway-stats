@@ -14,6 +14,22 @@ Corrections or improvements very welcome.
 
 See READMEs in the frontend and backend folders for further instructions on running.
 
+# Quick start
+
+- Set your Overpass API endpoint in `static-backend/src/config.ts` It's strongly recomended to run your own Overpass API instance - not just to reduce load on the public ones, but for speed!
+```
+cd static-backend
+nvm use
+npm install
+npm run build
+npm run start # This makes lots of Overpass requests - and will take a while!
+
+cd ../frontend
+npm install
+npm run start
+
+```
+
 ## Notes on overpass queries
 - Queries that contain `({{bbox}});` will run based on the current location you're viewing. If you pan/zoom the map and press run again you will get new data.
 - Queries that include `map_to_area` will be locked to a particular `relation` (a specified boundary). You can search for these relations on OSM, for example the City of Sydney is https://www.openstreetmap.org/relation/1251066.

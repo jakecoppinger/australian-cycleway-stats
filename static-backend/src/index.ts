@@ -26,7 +26,7 @@ import { RelationStatsObject, StatsFile } from './shared-types.js';
 import { OSMNode, OSMRelation, OSMWay } from "./types.js";
 import { getLengthOfAllWays, getWarnings } from "./utils/osm-geometry-utils.js";
 import { cachedFunctionCall } from './utils/cached-function-call.js';
-import { getPopulation } from './api/wikidata.js';
+import { getArea, getPopulation } from './api/wikidata.js';
 
 const jsonRelativeOutputPath = '../frontend/src/data/'
 
@@ -83,6 +83,9 @@ async function generateCouncilArea(relationId: number, overpassEndpoint: string)
 }
 
 
+/**
+ * Genrates the roads query and makes an Overpass request, then returns the length of all roads.
+ */
 async function generateRoadsLength(relationId: number, overpassEndpoint: string): Promise<number> {
   // const onewayRoads = await cachedOverpassTurboRequest(generateOnewayRoadsQuery(relationId)) as OSMWay[];
   // const bidirectionalRoads = await cachedOverpassTurboRequest(generateBidiectionalRoadsQuery(relationId)) as OSMWay[];
@@ -132,49 +135,62 @@ async function relationsToSummaries(relations: OSMRelation[], overpassEndpoint: 
 
   let dataByCouncil: RelationStatsObject[] = [];
   for (let i = 0; i < allCouncils.length; i++) {
+    const councilStartTime = Date.now();
     const council = allCouncils[i];
     const { relationId, wikipedia, wikidata } = council;
     const wikidataPopulation: number | null = wikidata
       ? await cachedFunctionCall(wikidata, getPopulation) || null
       : null;
+    let wikidataArea: number | null = null;
+
+    try {
+      if (wikidata) {
+        wikidataArea = await cachedFunctionCall(wikidata, getArea);
+      }
+    } catch (error) {
+      console.error(`Error fetching area data (won't be cached):`, error);
+    }
 
     const councilArea = await generateCouncilArea(relationId, overpassEndpoint);
 
     const relationInfoQuery = generateRelationInfoQuery(relationId);
-    const relationInfo = (await cachedOverpassTurboRequest({ request: relationInfoQuery, overpassEndpoint }))[0] as OSMRelation;
+    const dedicatedCyclewaysQuery = generateDedicatedCyclewaysQuery(relationId)
+    // const roadsQuery = generateRoadsQuery(relationId)
+    const onRoadCycleLanesQuery = generateOnRoadCycleLanes(relationId)
+    const underConstructionCyclewaysQuery = generateUnderConstructionCyclewaysQuery(relationId);
+
+    // 4x. Parallel requests
+    const relationInfoPromise = cachedOverpassTurboRequest({ request: relationInfoQuery, overpassEndpoint })
+    const dedicatedCyclewaysPromise = cachedOverpassTurboRequest({ request: dedicatedCyclewaysQuery, overpassEndpoint })
+    const onRoadCycleLanesPromise = cachedOverpassTurboRequest({ request: onRoadCycleLanesQuery, overpassEndpoint })
+    const underConstructionCyclewaysLengthPromise = cachedOverpassTurboRequest({ request: underConstructionCyclewaysQuery, overpassEndpoint })
+
+
+    const relationInfo = (await relationInfoPromise)[0] as OSMRelation;
     const councilName = relationInfo.tags.name || '(area missing name)';
     const councilNameEnglish = relationInfo.tags['name:en'];
+    const dedicatedCyclewaysLength = getLengthOfAllWays( await dedicatedCyclewaysPromise as OSMWay[]);
+    const onRoadCycleLanesLength = getLengthOfAllWays( await onRoadCycleLanesPromise as OSMWay[]);
+    const underConstructionCyclewaysLength = getLengthOfAllWays( await underConstructionCyclewaysLengthPromise as OSMWay[])
 
-    const dedicatedCyclewaysQuery = generateDedicatedCyclewaysQuery(relationId)
-    const dedicatedCyclewaysLength = getLengthOfAllWays(
-      await cachedOverpassTurboRequest({ request: dedicatedCyclewaysQuery, overpassEndpoint }) as OSMWay[]
-    )
-    const roadsQuery = generateRoadsQuery(relationId)
+
+    // 1x request
     const roadsLength = await generateRoadsLength(relationId, overpassEndpoint);
 
-    const onRoadCycleLanesQuery = generateOnRoadCycleLanes(relationId)
-    const onRoadCycleLanesLength = getLengthOfAllWays(
-      await cachedOverpassTurboRequest({ request: onRoadCycleLanesQuery, overpassEndpoint }) as OSMWay[]
-    )
+
     const sharedPathsQuery = generateSharedPathsQuery(relationId)
-    const sharedPathsLength = getLengthOfAllWays(
-      await cachedOverpassTurboRequest({ request: sharedPathsQuery, overpassEndpoint }) as OSMWay[]
-    )
-
-    const underConstructionCyclewaysQuery = generateUnderConstructionCyclewaysQuery(relationId);
-    const underConstructionCyclewaysLength = getLengthOfAllWays(
-      await cachedOverpassTurboRequest({ request: underConstructionCyclewaysQuery, overpassEndpoint }) as OSMWay[]
-    )
-
     const proposedCyclewaysQuery = generateProposedCyclewaysQuery(relationId);
-    const proposedCyclewaysLength = getLengthOfAllWays(
-      await cachedOverpassTurboRequest({ request: proposedCyclewaysQuery, overpassEndpoint }) as OSMWay[]
-    )
-
     const safeStreetsQuery = generateSafeStreetsQuery(relationId);
-    const safeStreetsLength = getLengthOfAllWays(
-      await cachedOverpassTurboRequest({ request: safeStreetsQuery, overpassEndpoint }) as OSMWay[]
-    )
+
+
+    // 3x. parallel requests
+    const sharedPathsPromise = cachedOverpassTurboRequest({ request: sharedPathsQuery, overpassEndpoint })
+    const proposedCyclewaysPromise = cachedOverpassTurboRequest({ request: proposedCyclewaysQuery, overpassEndpoint })
+    const safeStreetsPromise = cachedOverpassTurboRequest({ request: safeStreetsQuery, overpassEndpoint })
+
+    const sharedPathsLength = getLengthOfAllWays( await sharedPathsPromise as OSMWay[] )
+    const proposedCyclewaysLength = getLengthOfAllWays( await proposedCyclewaysPromise as OSMWay[])
+    const safeStreetsLength = getLengthOfAllWays( await safeStreetsPromise as OSMWay[] )
 
     const safeRoadsToRoadsRatio = roadsLength > 0
       ? safeStreetsLength / roadsLength : null;
@@ -186,6 +202,14 @@ async function relationsToSummaries(relations: OSMRelation[], overpassEndpoint: 
       ? (dedicatedCyclewaysLength + sharedPathsLength + safeStreetsLength) / roadsLength
       : null;
 
+    const separatedCyclewayLengthPerResident = wikidataPopulation
+      ? dedicatedCyclewaysLength / wikidataPopulation
+      : null;
+
+    const separatedCyclewayMetresPerSquareKilometre = wikidataArea
+      ? dedicatedCyclewaysLength / wikidataArea
+      : null;
+
     const generatedCouncilData: RelationStatsObject = {
       councilName, relationId, dedicatedCyclewaysLength, roadsLength,
       onRoadCycleLanesLength, sharedPathsLength,
@@ -193,10 +217,17 @@ async function relationsToSummaries(relations: OSMRelation[], overpassEndpoint: 
       underConstructionCyclewaysLength,
       proposedCyclewaysLength,
       safeStreetsLength, wikipedia, wikidata, wikidataPopulation,
-      safeRoadsToRoadsRatio, councilNameEnglish
+      safeRoadsToRoadsRatio, councilNameEnglish,
+      separatedCyclewayLengthPerResident,
+      separatedCyclewayMetresPerSquareKilometre,
+      wikidataId: wikidata,
     };
 
     dataByCouncil.push(generatedCouncilData);
+
+    const councilEndTime = Date.now();
+    const councilDuration = councilEndTime - councilStartTime;
+    console.log(`Generated data for ${councilName} in ${councilDuration}ms`);
   }
 
 
@@ -281,13 +312,13 @@ async function main() {
   } else {
     console.log('Running Australian & international requests in series...');
     if (!config.skipRegeneratingAustralianData) {
-      generateAustalianData();
+      await generateAustalianData();
     } else {
       console.log('Skipping Australian data generation');
     }
 
     if (!config.skipRegeneratingInternationalData) {
-      generateInternationalData();
+      await generateInternationalData();
     } else {
       console.log('Skipping international data generation');
     }

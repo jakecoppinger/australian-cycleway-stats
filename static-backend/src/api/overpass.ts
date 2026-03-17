@@ -30,6 +30,7 @@ export async function overpassTurboRequest({ request, overpassEndpoint }: { requ
   const apiUrl = overpassEndpoint ? overpassEndpoint : config.overpassApiEndpoints.default
   console.log(`Started POST request to ${overpassEndpoint} at ${new Date().toISOString()}...`);
 
+  const startTime = Date.now();
   const response = await fetch(apiUrl, {
     method: 'POST',
     headers: {
@@ -46,6 +47,9 @@ export async function overpassTurboRequest({ request, overpassEndpoint }: { requ
   const textResponse = await response.text();
   try {
     const jsonResponse = JSON.parse(textResponse);
+    const endTime = Date.now();
+    const duration = endTime - startTime;
+    console.log(`...took ${duration}ms`);
     return jsonResponse.elements as (OSMNode | OSMWay)[];
   } catch (e) {
     console.error(`Request: ${request}`);
