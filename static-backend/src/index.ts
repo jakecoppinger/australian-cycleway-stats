@@ -312,13 +312,13 @@ async function main() {
   } else {
     console.log('Running Australian & international requests in series...');
     if (!config.skipRegeneratingAustralianData) {
-      generateAustalianData();
+      await generateAustalianData();
     } else {
       console.log('Skipping Australian data generation');
     }
 
     if (!config.skipRegeneratingInternationalData) {
-      generateInternationalData();
+      await generateInternationalData();
     } else {
       console.log('Skipping international data generation');
     }
