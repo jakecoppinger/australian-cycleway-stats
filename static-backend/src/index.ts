@@ -27,6 +27,7 @@ import { OSMNode, OSMRelation, OSMWay } from "./types.js";
 import { getLengthOfAllWays, getWarnings } from "./utils/osm-geometry-utils.js";
 import { cachedFunctionCall } from './utils/cached-function-call.js';
 import { getArea, getPopulation } from './api/wikidata.js';
+import { sleep } from './utils/sleep.js';
 
 const jsonRelativeOutputPath = '../frontend/src/data/'
 
@@ -91,8 +92,26 @@ async function generateRoadsLength(relationId: number, overpassEndpoint: string)
   // const bidirectionalRoads = await cachedOverpassTurboRequest(generateBidiectionalRoadsQuery(relationId)) as OSMWay[];
   // return (getLengthOfAllWays(onewayRoads) / 2) + getLengthOfAllWays(bidirectionalRoads);
 
-  const roads = await cachedOverpassTurboRequest({ request: generateRoadsQuery(relationId), overpassEndpoint }) as OSMWay[];
+  const roads = await cachedOverpassTurboRequest({
+    request: generateRoadsQuery(relationId),
+    overpassEndpoint
+  }) as OSMWay[];
   return getLengthOfAllWays(roads);
+}
+
+async function runRequests(
+  requests: Array<() => Promise<any>>,
+  delayMs?: number
+): Promise<any[]> {
+  if (delayMs) {
+    const results: any[] = [];
+    for (const req of requests) {
+      results.push(await req());
+      await sleep(delayMs);
+    }
+    return results;
+  }
+  return Promise.all(requests.map(req => req()));
 }
 
 const outlierRelationIds: number[] = [
@@ -100,7 +119,8 @@ const outlierRelationIds: number[] = [
   11716544, // Darwin Waterfront Precinct Municipality - only a port
 ]
 
-async function relationsToSummaries(relations: OSMRelation[], overpassEndpoint: string): Promise<StatsFile> {
+async function relationsToSummaries(relations: OSMRelation[],
+  overpassEndpoint: string, rateLimitBetweenRequests: number | undefined): Promise<StatsFile> {
   const allCouncils = relations
     .map(
       (relation) => ({
@@ -138,6 +158,7 @@ async function relationsToSummaries(relations: OSMRelation[], overpassEndpoint: 
     const councilStartTime = Date.now();
     const council = allCouncils[i];
     const { relationId, wikipedia, wikidata } = council;
+    console.log(`Starting relationId ${relationId} (${wikipedia})...`);
     const wikidataPopulation: number | null = wikidata
       ? await cachedFunctionCall(wikidata, getPopulation) || null
       : null;
@@ -152,6 +173,9 @@ async function relationsToSummaries(relations: OSMRelation[], overpassEndpoint: 
     }
 
     const councilArea = await generateCouncilArea(relationId, overpassEndpoint);
+    if (rateLimitBetweenRequests) {
+      await sleep(rateLimitBetweenRequests);
+    }
 
     const relationInfoQuery = generateRelationInfoQuery(relationId);
     const dedicatedCyclewaysQuery = generateDedicatedCyclewaysQuery(relationId)
@@ -159,38 +183,44 @@ async function relationsToSummaries(relations: OSMRelation[], overpassEndpoint: 
     const onRoadCycleLanesQuery = generateOnRoadCycleLanes(relationId)
     const underConstructionCyclewaysQuery = generateUnderConstructionCyclewaysQuery(relationId);
 
-    // 4x. Parallel requests
-    const relationInfoPromise = cachedOverpassTurboRequest({ request: relationInfoQuery, overpassEndpoint })
-    const dedicatedCyclewaysPromise = cachedOverpassTurboRequest({ request: dedicatedCyclewaysQuery, overpassEndpoint })
-    const onRoadCycleLanesPromise = cachedOverpassTurboRequest({ request: onRoadCycleLanesQuery, overpassEndpoint })
-    const underConstructionCyclewaysLengthPromise = cachedOverpassTurboRequest({ request: underConstructionCyclewaysQuery, overpassEndpoint })
+    // 4x requests (sequential with delay, or parallel)
+    const [relationInfo_, dedicatedCycleways_, onRoadCycleLanes_, underConstruction_] =
+      await runRequests([
+        () => cachedOverpassTurboRequest({ request: relationInfoQuery, overpassEndpoint }),
+        () => cachedOverpassTurboRequest({ request: dedicatedCyclewaysQuery, overpassEndpoint }),
+        () => cachedOverpassTurboRequest({ request: onRoadCycleLanesQuery, overpassEndpoint }),
+        () => cachedOverpassTurboRequest({ request: underConstructionCyclewaysQuery, overpassEndpoint }),
+      ], rateLimitBetweenRequests);
 
-
-    const relationInfo = (await relationInfoPromise)[0] as OSMRelation;
+    const relationInfo = relationInfo_[0] as OSMRelation;
     const councilName = relationInfo.tags.name || '(area missing name)';
     const councilNameEnglish = relationInfo.tags['name:en'];
-    const dedicatedCyclewaysLength = getLengthOfAllWays( await dedicatedCyclewaysPromise as OSMWay[]);
-    const onRoadCycleLanesLength = getLengthOfAllWays( await onRoadCycleLanesPromise as OSMWay[]);
-    const underConstructionCyclewaysLength = getLengthOfAllWays( await underConstructionCyclewaysLengthPromise as OSMWay[])
+    const dedicatedCyclewaysLength = getLengthOfAllWays(dedicatedCycleways_ as OSMWay[]);
+    const onRoadCycleLanesLength = getLengthOfAllWays(onRoadCycleLanes_ as OSMWay[]);
+    const underConstructionCyclewaysLength = getLengthOfAllWays(underConstruction_ as OSMWay[])
 
 
     // 1x request
     const roadsLength = await generateRoadsLength(relationId, overpassEndpoint);
-
+    if (rateLimitBetweenRequests) {
+      await sleep(rateLimitBetweenRequests);
+    }
 
     const sharedPathsQuery = generateSharedPathsQuery(relationId)
     const proposedCyclewaysQuery = generateProposedCyclewaysQuery(relationId);
     const safeStreetsQuery = generateSafeStreetsQuery(relationId);
 
+    // 3x requests (sequential with delay, or parallel)
+    const [sharedPaths_, proposedCycleways_, safeStreets_] =
+      await runRequests([
+        () => cachedOverpassTurboRequest({ request: sharedPathsQuery, overpassEndpoint }),
+        () => cachedOverpassTurboRequest({ request: proposedCyclewaysQuery, overpassEndpoint }),
+        () => cachedOverpassTurboRequest({ request: safeStreetsQuery, overpassEndpoint }),
+      ], rateLimitBetweenRequests);
 
-    // 3x. parallel requests
-    const sharedPathsPromise = cachedOverpassTurboRequest({ request: sharedPathsQuery, overpassEndpoint })
-    const proposedCyclewaysPromise = cachedOverpassTurboRequest({ request: proposedCyclewaysQuery, overpassEndpoint })
-    const safeStreetsPromise = cachedOverpassTurboRequest({ request: safeStreetsQuery, overpassEndpoint })
-
-    const sharedPathsLength = getLengthOfAllWays( await sharedPathsPromise as OSMWay[] )
-    const proposedCyclewaysLength = getLengthOfAllWays( await proposedCyclewaysPromise as OSMWay[])
-    const safeStreetsLength = getLengthOfAllWays( await safeStreetsPromise as OSMWay[] )
+    const sharedPathsLength = getLengthOfAllWays(sharedPaths_ as OSMWay[])
+    const proposedCyclewaysLength = getLengthOfAllWays(proposedCycleways_ as OSMWay[])
+    const safeStreetsLength = getLengthOfAllWays(safeStreets_ as OSMWay[])
 
     const safeRoadsToRoadsRatio = roadsLength > 0
       ? safeStreetsLength / roadsLength : null;
@@ -259,7 +289,7 @@ async function generateAustalianData() {
   const allCouncilsQuery = generateAllCouncilsQuery(australiaRelationId);
   const allCouncilRaw = await cachedOverpassTurboRequest({ request: allCouncilsQuery, overpassEndpoint }) as OSMRelation[];
 
-  const sortedDataByCouncil = await relationsToSummaries(allCouncilRaw, overpassEndpoint);
+  const sortedDataByCouncil = await relationsToSummaries(allCouncilRaw, overpassEndpoint, undefined);
 
   await saveObjectToJsonFile(
     sortedDataByCouncil,
@@ -279,8 +309,14 @@ async function generateAustalianData() {
 async function generateInternationalData() {
   const overpassEndpoint = config.overpassApiEndpoints.default;
   const internationalExampleRelationsQuery = generateRelationsInfoQuery(internationalExampleRelationIds);
-  const internationalRelations = await cachedOverpassTurboRequest({ request: internationalExampleRelationsQuery, overpassEndpoint }) as OSMRelation[];
-  const internationalAreasSummaries = await relationsToSummaries(internationalRelations, overpassEndpoint);
+  console.log(`Getting international relations...`);
+  const internationalRelations = await cachedOverpassTurboRequest({
+    request:
+      internationalExampleRelationsQuery, overpassEndpoint
+  }) as OSMRelation[];
+  console.log(`Getting internationalrelations summaries...`);
+  const internationalAreasSummaries = await relationsToSummaries(internationalRelations,
+    overpassEndpoint, config.internationalRateLimitBetweenRequests);
   await saveObjectToJsonFile(
     internationalAreasSummaries,
     `${jsonRelativeOutputPath}international-areas.json`,

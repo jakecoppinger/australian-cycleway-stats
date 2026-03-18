@@ -20,6 +20,11 @@ export async function cachedFunctionCall<T extends Object>(input: T, fn: (i: T) 
     // Generate new data
     const data = await fn(input);
 
+    // Don't cache empty arrays - an empty Overpass response may be a transient server error
+    if (Array.isArray(data) && data.length === 0) {
+      return data;
+    }
+
     // Save the data to cache
     fs.writeFileSync(cachePath, JSON.stringify(data), 'utf-8');
 

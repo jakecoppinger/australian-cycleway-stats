@@ -2,15 +2,18 @@ import { config } from "../config.js";
 import { OSMNode, OSMRelation, OSMWay } from "../types.js";
 import { cachedFunctionCall } from "../utils/cached-function-call.js";
 
-export async function cachedOverpassTurboRequest({ request, overpassEndpoint }: 
+export async function cachedOverpassTurboRequest({ request, overpassEndpoint }:
   { request: string, overpassEndpoint: string }): Promise<(OSMNode | OSMWay | OSMRelation)[]> {
-  return cachedFunctionCall({request, overpassEndpoint}, robustOverpassTurboRequest);
+  return cachedFunctionCall({ request, overpassEndpoint }, robustOverpassTurboRequest);
 }
 
 /**
  * Repeatedly call `overpassTurboRequest` up to `maxTries` times until it succeeds.
  */
-export async function robustOverpassTurboRequest({ request, overpassEndpoint, maxTries=2 }: { request: string, overpassEndpoint: string, maxTries?: number }): Promise<(OSMNode | OSMWay | OSMRelation)[]> {
+export async function robustOverpassTurboRequest({ request, overpassEndpoint, maxTries = 2 }:
+  {
+    request: string, overpassEndpoint: string, maxTries?: number
+  }): Promise<(OSMNode | OSMWay | OSMRelation)[]> {
   let tries = 0;
   while (true) {
     try {
@@ -26,7 +29,10 @@ export async function robustOverpassTurboRequest({ request, overpassEndpoint, ma
   }
 }
 
-export async function overpassTurboRequest({ request, overpassEndpoint }: { request: string, overpassEndpoint: string }): Promise<(OSMNode | OSMWay | OSMRelation)[]> {
+export async function overpassTurboRequest({ request, overpassEndpoint }: {
+  request: string,
+  overpassEndpoint: string
+}): Promise<(OSMNode | OSMWay | OSMRelation)[]> {
   const apiUrl = overpassEndpoint ? overpassEndpoint : config.overpassApiEndpoints.default
   console.log(`Started POST request to ${overpassEndpoint} at ${new Date().toISOString()}...`);
 
